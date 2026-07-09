@@ -3,6 +3,7 @@ import folium
 import math
 import requests
 import pandas as pd
+import numpy as np
 from streamlit_folium import folium_static
 
 # 1. CẤU HÌNH GIAO DIỆN WEB TOÀN MÀN HÌNH
@@ -60,7 +61,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM (ĐÃ CHUẨN HÓA ĐỊA CHỈ ĐỂ TRA CỨU API CHÍNH XÁC)
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM
 VNPOST_HUBS = {
     "Bưu cục Tân Định (Q1)": "230 Hai Ba Trung, Quan 1",
     "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Cong xa Paris, Quan 1",
@@ -110,7 +111,7 @@ def generate_turn_by_turn(geometry_coords):
     instructions.append("🔴 **Đến nơi:** Địa điểm bàn giao hàng nằm phía trước.")
     return instructions[:6]
 
-# 3. THIẾT LẬP THANH SIDEBAR NGUYÊN BẢN CỦA BẠN
+# 3. THIẾT LẬP THANH SIDEBAR CẤU HÌNH LỘ TRÌNH
 with st.sidebar:
     st.markdown("""### 🛠️ Cấu hình lộ trình""")
     selected_start_hub = st.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
@@ -138,33 +139,56 @@ tab_enterprise, tab_routing, tab_status = st.tabs([
 ])
 
 # ------------------------------------------
-# TAB 1: TRUNG TÂM GIÁM SÁT
+# TAB 1: TRUNG TÂM GIÁM SÁT (NÂNG CẤP BIỂU ĐỒ TRỰC QUAN)
 # ------------------------------------------
 with tab_enterprise:
     st.markdown("""### 📊 Tổng quan Hoạt động Mạng lưới""")
     st.markdown(f"<div style='background-color:#e0f2fe; padding:12px; border-radius:8px; border-left:4px solid #0284c7; color:#0369a1;'>📍 <b>Bưu cục đang giám sát:</b> {selected_start_hub} — <b>Địa chỉ:</b> {VNPOST_HUBS[selected_start_hub]}</div>", unsafe_allow_html=True)
     
     st.markdown("---")
-    col_info1, col_info2 = st.columns([1, 1])
-    with col_info1:
-        st.markdown("""#### ⚡ Hiệu suất khai thác trong ngày""")
-        st.write("Tỷ lệ bưu phẩm hoàn thành chặng cuối:")
-        st.progress(0.85)
-        
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            st.markdown("""<div class="metric-card"><p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">ĐÃ GIAO THÀNH CÔNG</p><h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">1,420 kiện</h2><p style="margin:0; font-size:0.85rem; color:#16a34a;">↗️ +12% so với hôm qua</p></div>""", unsafe_allow_html=True)
-        with col_m2:
-            st.markdown("""<div class="metric-card"><p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">BƯU TÁ THỰC ĐỊA</p><h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">45 Nhân sự</h2><p style="margin:0; font-size:0.85rem; color:#0284c7;">🔵 Trạng thái: Sẵn sàng</p></div>""", unsafe_allow_html=True)
     
-    with col_info2:
-        with st.container(border=True):
-            st.markdown("""🎯 **Quản lý Tải trọng & Khuyến cáo Phân tuyến**""")
-            st.warning("⚠️ Hệ thống phát hiện có **24 bưu phẩm cồng kềnh** có kích thước vượt giỏ hàng xe máy thông thường.")
-            st.markdown("""
-            * 🛵 **Xe máy bưu tá:** Phù hợp bưu phẩm thư từ, tài liệu gọn (< 5kg).
-            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bổ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
-            """)
+    # Khu vực thẻ số liệu nhanh (KPI Cards)
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        st.markdown("""<div class="metric-card"><p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">ĐÃ GIAO THÀNH CÔNG</p><h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">1,420 kiện</h2><p style="margin:0; font-size:0.85rem; color:#16a34a;">↗️ +12% so với hôm qua</p></div>""", unsafe_allow_html=True)
+    with col_m2:
+        st.markdown("""<div class="metric-card"><p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">BƯU TÁ THỰC ĐỊA</p><h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">45 Nhân sự</h2><p style="margin:0; font-size:0.85rem; color:#0284c7;">🔵 Trạng thái: Sẵn sàng</p></div>""", unsafe_allow_html=True)
+    with col_m3:
+        st.markdown("""<div class="metric-card"><p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">TỶ LỆ TOÀN TRÌNH POD</p><h2 style="margin:5px 0 0 0; color:#e67e22; font-weight:800;">94.8 %</h2><p style="margin:0; font-size:0.85rem; color:#64748b;">⏱️ Cập nhật: Vừa xong</p></div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+    
+    # KHU VỰC THỂ HIỆN BIỂU ĐỒ PHÂN TÍCH (ANALYTICS DASHBOARD)
+    col_chart1, col_chart2 = st.columns([1, 1])
+    
+    with col_chart1:
+        st.markdown("#### 📈 Tỷ lệ giao hàng thành công theo khu vực (Quận)")
+        # Tạo dữ liệu mẫu tỉ lệ đơn hàng thành công và thất bại theo khu vực
+        chart_data_district = pd.DataFrame({
+            "Thành công (Đã ký POD)": [420, 380, 290, 180, 150],
+            "Đang phát/Hoãn lại": [15, 22, 12, 8, 19]
+        }, index=["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"])
+        
+        # Hiển thị biểu đồ cột chồng (Stacked Bar Chart)
+        st.bar_chart(chart_data_district, color=["#0056b3", "#ffc745"])
+        st.caption("Biểu đồ so sánh số lượng đơn phát thành công trực quan giữa các cụm bưu cục chặng cuối.")
+
+    with col_chart2:
+        st.markdown("#### 🚚 Biểu đồ xu hướng tải trọng vận chuyển trong tuần")
+        # Tạo dữ liệu mẫu xu hướng tải trọng (Tấn) theo ngày trong tuần của 2 đội xe
+        chart_data_weight = pd.DataFrame({
+            "Đội xe máy chặng cuối": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5],
+            "Đội xe tải bưu chính": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]
+        }, index=["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"])
+        
+        # Hiển thị biểu đồ miền xu hướng (Area Chart)
+        st.area_chart(chart_data_weight, color=["#22c55e", "#ef4444"])
+        st.caption("Khối lượng tải trọng hàng hóa biến động (Đơn vị: Tấn) phân bổ theo lịch trình tuần hành.")
+
+    st.markdown("---")
+    with st.container(border=True):
+        st.markdown("""🎯 **Khuyến cáo Điều phối từ Hệ thống trí tuệ nhân tạo:**""")
+        st.warning("⚠️ Dự báo cao điểm: Tải trọng khu vực **Quận 1** và **Quận 3** tăng mạnh vào ngày Thứ 6 và Thứ 7. Đề xuất tăng cường thêm 15% nhân sự bưu tá chặng cuối.")
 
 # ------------------------------------------
 # TAB 2: TỐI ƯU TUYẾN ĐƯỜNG (BẢN ĐỒ)
@@ -174,7 +198,6 @@ with tab_routing:
     
     col_left, col_right = st.columns([1.8, 1.2])
     
-    # KHỞI TẠO BẢN ĐỒ AN TOÀN TRƯỚC (SỬA TRIỆT ĐỂ LỖI NAMERROR BIẾN M)
     default_lat, default_lon = 10.7760, 106.7032
     m = folium.Map(location=[default_lat, default_lon], zoom_start=14, control_scale=True)
 
@@ -198,7 +221,6 @@ with tab_routing:
                             st.error(f"❌ Không tìm thấy vị trí địa chỉ khách hàng: '{end_input}'")
                             folium_static(m, width=700, height=480)
                     else:
-                        # GỌI API ĐỊNH TUYẾN OSRM VỚI CHUỖI F-STRING ĐƯỢC ĐÓNG NGOẶC CHUẨN XÁC
                         lon1, lat1 = loc1['lon'], loc1['lat']
                         lon2, lat2 = loc2['lon'], loc2['lat']
                         url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
@@ -252,45 +274,4 @@ with tab_status:
     mock_orders = {
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
         "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D"],
-        "Địa Chỉ": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "Vòng xoay Dân Chủ"],
-        "Loại Hàng": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Hàng dễ vỡ"]
-    }
-    df_orders = pd.DataFrame(mock_orders)
-    st.dataframe(df_orders, use_container_width=True)
-    
-    st.markdown("---")
-    
-    col_status1, col_status2 = st.columns([1, 1])
-    with col_status1:
-        st.markdown("""#### 🆔 Cập nhật tiến độ phát hàng""")
-        selected_order = st.selectbox("Chọn mã vận đơn cần cập nhật hành trình:", df_orders["Mã Vận Đơn"])
-        
-        status_options = [
-            "🛵 Bưu tá đang đi phát hàng chặng cuối",
-            "✅ Phát thành công (Đã ký nhận POD)",
-            "❌ Giao hàng thất bại / Khách hẹn lại ca sau",
-            "🚨 Báo cáo sự cố khẩn cấp phát sinh trên đường (SOS)"
-        ]
-        current_status = st.selectbox("Trạng thái vận đơn mới:", status_options, index=0)
-        
-        if "Thất bại" in current_status:
-            st.selectbox("Lý do chi tiết giao không thành công:", ["Khách thuê bao tắt máy không liên lạc được", "Khách hẹn ca tối", "Sai thông tin số nhà địa chỉ"])
-        elif "Thành công" in current_status:
-            st.file_uploader("📸 Tải lên ảnh chụp ký nhận thực tế tại nhà khách (Bằng chứng POD):", type=["jpg", "png", "jpeg"])
-        elif "SOS" in current_status:
-            st.error("🚨 HỆ THỐNG PHẢN ỨNG NHANH CỨU HỘ SỰ CỐ KHẨN CẤP")
-            st.text_area("Mô tả chi tiết tình huống bưu tá gặp phải:", placeholder="Ví dụ: Xe hỏng săm lốp tại ngã tư, cần xe hỗ trợ bốc hàng...")
-            
-        note = st.text_area("Ghi chú bổ sung của bưu tá thực địa:", value="Đang di chuyển.")
-        if st.button("💾 ĐỒNG BỘ DỮ LIỆU LÊN TỔNG ĐÀI VNPOST"):
-            st.toast("Đồng bộ trạng thái vận đơn thành công lên hệ thống trục chính!", icon="🚀")
-            
-    with col_status2:
-        st.markdown("""#### 🕒 Nhật ký hành trình (Timeline Chi tiết)""")
-        with st.container(border=True):
-            st.markdown(f"**Mã vận đơn kiểm tra:** `{selected_order}`")
-            st.markdown(f"📍 **Trạng thái thực tế:** `{current_status}`")
-            st.markdown("---")
-            st.markdown(f"- **[2026-07-09 10:55]** {current_status} | *Ghi chú: {note}*")
-            st.markdown("- **[2026-07-09 06:15]** 📥 Đã nhập kho phân chọn bưu cục chặng cuối thành công.")
-            st.markdown("- **[2026-07-08 14:20]** 🚚 Đang vận chuyển liên tỉnh trên trục bưu chính quốc gia Việt Nam.")
+        "Địa Chỉ":
