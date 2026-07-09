@@ -153,4 +153,29 @@ with tab_map:
                 st.error(f"Lỗi xử lý thuật toán: {e}")
     else:
         folium.Marker([start_lat, start_lon], tooltip=selected_start_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
-        with col_right:
+        with col_right: 
+            st.info("Nhấn nút bên trái để hệ thống kích hoạt tự động sắp xếp điểm gần nhau!")
+        
+    with col_left: 
+        folium_static(m, width=700, height=450)
+
+with tab_order:
+    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
+    
+    updated_df = st.data_editor(
+        st.session_state.orders_data, 
+        use_container_width=True, 
+        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], 
+        column_config={
+            "Trạng Thái": st.column_config.SelectboxColumn(
+                "Trạng Thái", 
+                options=["Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], 
+                required=True
+            )
+        },
+        key="orders_editor"
+    )
+    
+    if not updated_df.equals(st.session_state.orders_data):
+        st.session_state.orders_data = updated_df
+        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!", icon="💾")
