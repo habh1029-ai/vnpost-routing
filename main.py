@@ -3,6 +3,7 @@ import folium
 import math
 import requests
 import pandas as pd
+from streamlit_folium import folium_static
 
 # 1. CẤU HÌNH GIAO DIỆN WEB TOÀN MÀN HÌNH & GIAO DIỆN HIỆN ĐẠI
 st.set_page_config(
@@ -84,60 +85,50 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-def get_advanced_libraries():
-    from streamlit_folium import folium_static
-    from folium.plugins import Fullscreen
-    return folium_static, Fullscreen
-
-# BANNER TIÊU ĐỀ TRÊN CÙNG
-st.markdown('<p class="main-title">✉️ HỆ THỐNG ĐIỀU HÀNH BƯU CHÍNH THÔNG MINH VIETNAM POST</p>', unsafe_allow_html=True)
-st.markdown("<p style='color:#64748b; font-style:italic;'>Trực quan hóa mạng lưới Logistics, Định tuyến chặng cuối & Giám sát trạng thái thời gian thực</p>", unsafe_allow_html=True)
-
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM ĐÃ ĐƯỢC LÀM SẠCH CHỮ QUẬN TRONG NGOẶC KÉP
 VNPOST_HUBS = {
-    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Quận 1",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng, Quận 1",
-    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Quận 1",
-    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Quận 1",
+    "Bưu cục Giao dịch Sài Gòn": "2 Công xã Paris, Quận 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Bà Trưng, Quận 1",
+    "Bưu cục Tân Định": "230 Hai Bà Trưng, Quận 1",
+    "Bưu cục Trần Hưng Đạo": "447B Trần Hưng Đạo, Quận 1",
     "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Quận 3",
-    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Quận 3",
-    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Quận 3",
+    "Bưu cục Bàn Cờ": "49A Cao Thắng, Quận 3",
+    "Bưu cục Vườn Xoài": "472 Lê Văn Sỹ, Quận 3",
     "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Quận 4",
-    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Quận 4",
-    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Quận 5",
+    "Bưu cục Khánh Hội": "52 Lê Quốc Hưng, Quận 4",
+    "Bưu cục Nguyễn Trãi": "49 Nguyễn Trãi, Quận 5",
     "Bưu cục Quận 5": "26 Nguyễn Thi, Quận 5",
     "Bưu cục Quận 6": "88 Tháp Mười, Quận 6",
-    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Quận 7",
+    "Bưu cục Tân Phong": "565 Nguyễn Thị Thập, Quận 7",
     "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Quận 7",
-    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển, Quận 8",
+    "Bưu cục Chánh Hưng": "Chung cư Phạm Thế Hiển, Quận 8",
     "Bưu cục Quận 8": "428 Tùng Thiện Vương, Quận 8",
     "Bưu cục Quận 10": "157 Lý Thái Tổ, Quận 10",
-    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám, Quận 10",
-    "Bưu cục Phú Thọ (Q10)": "270 Lý Thường Kiệt, Quận 10",
+    "Bưu cục Hoà Hưng": "411 Cách Mạng Tháng Tám, Quận 10",
+    "Bưu cục Phú Thọ": "270 Lý Thường Kiệt, Quận 10",
     "Bưu cục Quận 11": "244 Minh Phụng, Quận 11",
-    "Bưu cục Quang Trung (Q12)": "Tô Ký, Đông Hưng Thuận, Quận 12",
-    "Bưu cục Tân Thới Nhất (Q12)": "44 Phan Văn Hớn, Quận 12",
-    "Bưu cục An Khánh (Q2 cũ)": "D7 Trần Não, Quận 2",
-    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh, Quận 2",
-    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện, Quận 9",
-    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2, Quận 9",
-    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa, Thủ Đức",
-    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4, Thủ Đức",
+    "Bưu cục Quang Trung": "Tô Ký, Đông Hưng Thuận, Quận 12",
+    "Bưu cục Tân Thới Nhất": "44 Phan Văn Hớn, Quận 12",
+    "Bưu cục An Khánh": "D7 Trần Não, Quận 2",
+    "Bưu cục Bình Trưng": "42 Nguyễn Duy Trinh, Quận 2",
+    "Bưu cục Chợ Nhỏ": "95 Man Thiện, Quận 9",
+    "Bưu cục Phước Bình": "45 Đại lộ 2, Quận 9",
+    "Bưu cục Bình Triệu": "705 Gò Dưa, Thủ Đức",
+    "Bưu cục Linh Trung": "16 Đường số 4, Thủ Đức",
     "Bưu cục Thủ Đức": "128A Kha Vạn Cân, Thủ Đức",
-    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh, Bình Thạnh",
+    "Bưu cục Thị Nghè": "23 Xô Viết Nghệ Tĩnh, Bình Thạnh",
     "Bưu cục Bình Thạnh": "3 Phan Đăng Lưu, Bình Thạnh",
     "Bưu cục Phú Nhuận": "241 Phan Đình Phùng, Phú Nhuận",
     "Bưu cục Gò Vấp": "555 Lê Quang Định, Gò Vấp",
-    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm, Gò Vấp",
-    "Bưu cục Tân Sơn Nhất (TBT)": "2B Bạch Đằng, Tân Bình",
+    "Bưu cục Lê Văn Thọ": "56 Cây Trâm, Gò Vấp",
+    "Bưu cục Tân Sơn Nhất": "2B Bạch Đằng, Tân Bình",
     "Bưu cục Tân Bình": "288 Hoàng Văn Thụ, Tân Bình",
-    "Bưu cục Chí Hòa (TBT)": "695 Cách Mạng Tháng Tám, Tân Bình",
-    "Bưu cục Gò Dầu (TPhú)": "Chung cư Gò Dầu 2, Tân Phú",
+    "Bưu cục Chí Hòa": "695 Cách Mạng Tháng Tám, Tân Bình",
+    "Bưu cục Gò Dầu": "Chung cư Gò Dầu 2, Tân Phú",
     "Bưu cục Tân Phú": "90 Nguyễn Sơn, Tân Phú",
-    "Bưu cục Bình Hưng Hòa (BTân)": "1026 Tân Kỳ Tân Quý, Bình Tân",
+    "Bưu cục Bình Hưng Hòa": "1026 Tân Kỳ Tân Quý, Bình Tân",
     "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57 Lý Nam Đế, Hóc Môn",
-    "Bưu cục Tân Phú Trung (CC)": "912 Quốc Lộ 22, Củ Chi",
+    "Bưu cục Tân Phú Trung": "912 Quốc Lộ 22, Củ Chi",
     "Bưu cục Bình Chánh": "E9 Nguyễn Hữu Trí, Bình Chánh"
 }
 
@@ -251,7 +242,6 @@ with tab_enterprise:
 with tab_routing:
     st.markdown("### 🗺️ Bản đồ Định tuyến & Tối ưu lộ trình bưu tá")
     
-    # TIÊU ĐỀ THANH BÊN ĐÃ ĐƯỢC ĐỔI THÀNH "⚡ Thiết lập Lộ trình Tối ưu"
     st.sidebar.markdown("<h3 style='color:#0056b3;'>⚡ Thiết lập Lộ trình Tối ưu</h3>", unsafe_allow_html=True)
     
     selected_start_hub = st.sidebar.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
@@ -278,7 +268,6 @@ with tab_routing:
         else:
             try:
                 with st.spinner("🔍 Đang kết nối OSRM định vị..."):
-                    folium_static, Fullscreen = get_advanced_libraries()
                     loc1 = get_coordinates_from_address(start_input)
                     loc2 = get_coordinates_from_address(end_input)
                     
@@ -288,7 +277,8 @@ with tab_routing:
                         st.error(f"❌ Không tìm thấy vị trí khách hàng: '{end_input}'")
                     else:
                         profile = "driving"
-                        url = f"http://router.project-osrm.org/route/v1/{profile}/{loc1['lon']}/{loc1['lat']};{loc2['lon']},{loc2['lat']}?overview=full&geometries=geojson"
+                        # ĐÃ SỬA: Sửa dấu gạch chéo sang dấu phẩy giữa lon và lat của loc1
+                        url = f"http://router.project-osrm.org/route/v1/{profile}/{loc1['lon']},{loc1['lat']};{loc2['lon']},{loc2['lat']}?overview=full&geometries=geojson"
                         response = requests.get(url).json()
                         
                         if response.get('code') == 'Ok':
@@ -310,7 +300,6 @@ with tab_routing:
                             center_lat = (loc1['lat'] + loc2['lat']) / 2
                             center_lon = (loc1['lon'] + loc2['lon']) / 2
                             m = folium.Map(location=[center_lat, center_lon], zoom_start=15, control_scale=True)
-                            Fullscreen(position="topleft", title="Mở rộng").add_to(m)
                             folium.TileLayer('openstreetmap').add_to(m)
                             
                             folium.Marker([loc1['lat'], loc1['lon']], tooltip=f"Bưu cục: {loc1['display_name']}", icon=folium.Icon(color='green', icon='play')).add_to(m)
