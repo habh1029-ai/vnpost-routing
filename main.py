@@ -60,7 +60,6 @@ def get_coordinates_from_address(address_text):
     return {"lat": 10.7760, "lon": 106.7032}
 
 with st.sidebar:
-    # CHÈN LOGO VIETNAM POST VÀO SIDEBAR
     logo_url = "https://vptsc.vnpost.vn/TinTuc/Logo-VNPost.png"
     st.markdown(f'<div class="logo-container"><img src="{logo_url}" width="180"></div>', unsafe_allow_html=True)
     
@@ -134,7 +133,6 @@ with tab_map:
                             optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
                         else:
                             folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
-                            # ĐÃ SỬA: Hiển thị đúng số chặng tăng dần (Chặng 1, Chặng 2, ...) thay vì luôn hiển thị Chặng 0
                             optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
                             current_stop_number += 1
 
@@ -177,4 +175,5 @@ with tab_order:
     
     if not updated_df.equals(st.session_state.orders_data):
         st.session_state.orders_data = updated_df
-        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!",
+        # ĐÃ SỬA: Đóng ngoặc chuẩn xác cho câu lệnh st.toast
+        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!", icon="💾")
