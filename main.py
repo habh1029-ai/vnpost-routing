@@ -85,7 +85,11 @@ def get_coordinates_from_address(address_text):
         headers = {"User-Agent": "vietnam_post_routing_app_2026"}
         response = requests.get(url, headers=headers, timeout=10).json()
         if response:
-            return {"lat": float(response[0]["lat"]), "lon": float(response[0]["lon"]), "display_name": response[0]["display_name"].split(",")[0]}
+            return {
+                "lat": float(response[0]["lat"]), 
+                "lon": float(response[0]["lon"]), 
+                "display_name": response[0]["display_name"].split(",")[0]
+            }
         return None
     except Exception:
         return None
@@ -105,14 +109,4 @@ def generate_turn_by_turn(geometry_coords):
     for i in range(sample_rate, len(geometry_coords) - sample_rate, sample_rate):
         p1, p2, p3 = geometry_coords[i - sample_rate], geometry_coords[i], geometry_coords[i + sample_rate]
         turn = (calculate_bearing(p2[0], p2[1], p3[0], p3[1]) - calculate_bearing(p1[0], p1[1], p2[0], p2[1]) + 360) % 360
-        if 25 <= turn < 155: instructions.append("↩️ **Rẽ phải** tại giao lộ tiếp theo.")
-        elif 205 <= turn < 335: instructions.append("↪️ **Rẽ trái** vào tuyến đường phân phối.")
-    instructions.append("🔴 **Đến nơi:** Địa điểm bàn giao hàng nằm phía trước.")
-    return instructions[:6]
-
-# 3. SIDEBAR CẤU HÌNH LỘ TRÌNH
-with st.sidebar:
-    st.markdown("""### 🛠️ Cấu hình lộ trình""")
-    selected_start_hub = st.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
-    start_input = st.text_area("Từ bưu cục:", value=VNPOST_HUBS[selected_start_hub], height=70)
-    end_input = st.text_input("Địa chỉ giao hàng nhận (Ví dụ: 100 Cao Thắng):", value="100 Cao Thắng")
+        if 25 <=
