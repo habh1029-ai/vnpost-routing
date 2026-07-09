@@ -82,7 +82,7 @@ st.markdown("""
             box-shadow: 0 4px 10px rgba(0,86,179,0.3);
         }
     </style>
-""", unsafe_unsafe_allow_html=True)
+""", unsafe_allow_html=True)  # <-- Đã sửa thành công lỗi gõ thừa chữ ở đây!
 
 
 def get_advanced_libraries():
@@ -94,7 +94,7 @@ def get_advanced_libraries():
 st.markdown('<p class="main-title">✉️ HỆ THỐNG ĐIỀU HÀNH BƯU CHÍNH THÔNG MINH VIETNAM POST</p>', unsafe_allow_html=True)
 st.markdown("<p style='color:#64748b; font-style:italic;'>Trực quan hóa mạng lưới Logistics, Định tuyến chặng cuối & Giám sát trạng thái thời gian thực</p>", unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN (ĐÃ TỐI ƯU ĐỊA CHỈ GỌN)
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN
 VNPOST_HUBS = {
     "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Quận 1",
     "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng, Quận 1",
@@ -218,7 +218,6 @@ with tab_enterprise:
         st.write("Tỷ lệ bưu phẩm hoàn thành chặng cuối:")
         st.progress(0.85)
         
-        # Áp dụng CSS Card vừa thiết kế để trang trí chỉ số sinh động hơn
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             st.markdown(f"""
@@ -283,7 +282,7 @@ with tab_routing:
                     loc2 = get_coordinates_from_address(end_input)
                     
                     if not loc1:
-                        st.error(f"❌ Bản đồ chưa nhận diện được bưu cục: '{start_input}'. Hãy dùng Cách 1 xóa bớt chữ.")
+                        st.error(f"❌ Bản đồ chưa nhận diện được bưu cục: '{start_input}'.")
                     elif not loc2:
                         st.error(f"❌ Không tìm thấy vị trí khách hàng: '{end_input}'")
                     else:
