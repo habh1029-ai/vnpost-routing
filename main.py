@@ -5,6 +5,7 @@ import math
 import requests
 import pandas as pd
 from streamlit_folium import folium_static
+import time
 
 # 1. CẤU HÌNH GIAO DIỆN
 st.set_page_config(page_title="VNPOST - Điều hành Logistics Đa điểm", layout="wide")
@@ -17,7 +18,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. CƠ SỞ DỮ LIỆU CỐ ĐỊNH
+# 2. CƠ SỞ DỮ LIỆU TĨNH (ĐÃ FIX TỌA ĐỘ TRÁNH BLOCK API)
 VNPOST_HUBS = {
     "Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Quận 1", "lat": 10.7891, "lon": 106.6910},
     "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Quận 1", "lat": 10.7798, "lon": 106.6999},
@@ -28,8 +29,11 @@ VNPOST_HUBS = {
 }
 
 POPULAR_STOPS = {
-    "100 cao thắng": [10.7745, 106.6811], "320 nguyễn du": [10.7712, 106.6945],
-    "hồ con rùa": [10.7827, 106.6961], "220 hồ con rùa": [10.7827, 106.6961], "02 võ oanh": [10.8021, 106.7142]
+    "100 cao thắng": [10.7745, 106.6811], 
+    "320 nguyễn du": [10.7712, 106.6945],
+    "hồ con rùa": [10.7827, 106.6961], 
+    "220 hồ con rùa": [10.7827, 106.6961], 
+    "02 võ oanh": [10.8021, 106.7142]
 }
 
 DISTRICT_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
@@ -49,13 +53,18 @@ if "orders_df" not in st.session_state:
 def get_coordinates_from_address(address_text):
     clean_addr = address_text.lower().strip()
     for key, coords in POPULAR_STOPS.items():
-        if key in clean_addr: return {"lat": coords[0], "lon": coords[1]}
+        if key in clean_addr: 
+            return {"lat": coords[0], "lon": coords[1]}
     try:
+        time.sleep(0.5) # Thêm khoảng trễ an toàn tránh bị block API
         url = f"https://nominatim.openstreetmap.org/search?q={requests.utils.quote(address_text + ', Ho Chi Minh, VN')}&format=json&limit=1"
-        res = requests.get(url, headers={"User-Agent": "vnpost_bot_2026"}, timeout=5).json()
-        if res: return {"lat": float(res[0]["lat"]), "lon": float(res[0]["lon"])}
-    except: pass
-    return {"lat": 10.7760 + (hash(address_text) % 100) / 5000, "lon": 106.7032 + (hash(address_text) % 100) / 5000}
+        res = requests.get(url, headers={"User-Agent": "vnpost_routing_system_2026"}, timeout=5).json()
+        if res: 
+            return {"lat": float(res[0]["lat"]), "lon": float(res[0]["lon"])}
+    except: 
+        pass
+    # Tọa độ dự phòng thông minh cố định không đổi để tránh crash giao diện
+    return {"lat": 10.7760, "lon": 106.7032}
 
 # 3. THANH SIDEBAR
 with st.sidebar:
@@ -85,8 +94,4 @@ with tab_monitor:
     col_c2.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
 
 with tab_map:
-    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế")
-    col_left, col_right = st.columns([1.8, 1.2])
-    start_lat, start_lon = VNPOST_HUBS[selected_start_hub]["lat"], VNPOST_HUBS[selected_start_hub]["lon"]
-    
-    m = folium.Map(location=[start_lat, start_lon], zoom_start=14)
+    st.write("
