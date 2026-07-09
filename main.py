@@ -13,6 +13,7 @@ st.markdown("""
         .main-title { font-size: 2rem !important; font-weight: 800; color: #0056b3; text-transform: uppercase; border-bottom: 4px solid #F2A900; padding-bottom: 10px; margin-bottom: 5px; }
         .metric-card { background: #f8fafc; border-left: 5px solid #F2A900; border-radius: 8px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 10px; }
         div.stButton > button:first-child { background: #F2A900; color: #003366 !important; font-weight: bold !important; border: none; border-radius: 6px; width: 100%; }
+        .logo-container { text-align: center; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -43,7 +44,6 @@ DISTRICT_INDEX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 WEIGHT_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
-# Khởi tạo dữ liệu gốc trong session_state nếu chưa tồn tại
 if "orders_data" not in st.session_state:
     st.session_state.orders_data = pd.DataFrame({
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
@@ -60,6 +60,10 @@ def get_coordinates_from_address(address_text):
     return {"lat": 10.7760, "lon": 106.7032}
 
 with st.sidebar:
+    # CHÈN LOGO VIETNAM POST VÀO SIDEBAR
+    logo_url = "https://vptsc.vnpost.vn/TinTuc/Logo-VNPost.png"
+    st.markdown(f'<div class="logo-container"><img src="{logo_url}" width="180"></div>', unsafe_allow_html=True)
+    
     st.write("### CẤU HÌNH PHÂN TUYẾN")
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     st.text_area("Địa chỉ bưu cục điều phối:", value=VNPOST_HUBS[selected_start_hub]["address"], height=70, disabled=True)
@@ -130,6 +134,7 @@ with tab_map:
                             optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
                         else:
                             folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                            # ĐÃ SỬA: Hiển thị đúng số chặng tăng dần (Chặng 1, Chặng 2, ...) thay vì luôn hiển thị Chặng 0
                             optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
                             current_stop_number += 1
 
@@ -156,7 +161,6 @@ with tab_map:
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
     
-    # Cải tiến: Thêm key độc lập để Streamlit tự động quản lý trạng thái sửa đổi của bảng
     updated_df = st.data_editor(
         st.session_state.orders_data, 
         use_container_width=True, 
@@ -171,7 +175,6 @@ with tab_order:
         key="orders_editor"
     )
     
-    # Ép cập nhật ngược lại bộ nhớ session_state ngay khi phát hiện sự thay đổi dữ liệu ô chọn
     if not updated_df.equals(st.session_state.orders_data):
         st.session_state.orders_data = updated_df
-        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!", icon="💾")
+        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!",
