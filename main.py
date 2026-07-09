@@ -16,7 +16,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Đầy đủ danh sách bưu cục gốc của bạn
+# Khôi phục đầy đủ danh mục bưu cục
 VNPOST_HUBS = {
     "Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Q1", "lat": 10.7891, "lon": 106.6910},
     "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Q1", "lat": 10.7798, "lon": 106.6999},
@@ -35,6 +35,12 @@ POPULAR_STOPS = {
     "320 nguyễn du": [10.7712, 106.6945],
     "hồ con rùa": [10.7827, 106.6961]
 }
+
+# Khôi phục dữ liệu biểu đồ nền
+D_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
+D_IDX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
+W_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
+W_IDX = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 
 if "map_ready" not in st.session_state: st.session_state.map_ready = False
 if "lines_cache" not in st.session_state: st.session_state.lines_cache = []
@@ -66,6 +72,16 @@ with tab_monitor:
     c1.markdown('<div class="metric-card"><b>ĐA GIAO POD</b><h3 style="color:#0056b3;margin:0;">1.420 kiện</h3></div>', unsafe_allow_html=True)
     c2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
     c3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
+    
+    # Khôi phục khu vực hiển thị hai biểu đồ phân tích sản lượng
+    st.write("---")
+    col_chart1, col_chart2 = st.columns(2)
+    with col_chart1:
+        st.write("#### Sản lượng giao thành công theo quận")
+        st.bar_chart(pd.DataFrame(D_DATA, index=D_IDX), color=["#0056b3", "#ffc745"])
+    with col_chart2:
+        st.write("#### Trọng tải vận chuyển trong tuần (Tấn)")
+        st.area_chart(pd.DataFrame(W_DATA, index=W_IDX), color=["#22c55e", "#ef4444"])
 
 with tab_map:
     st.write("### Bản đồ điều phối chuỗi điểm giao hàng")
@@ -119,7 +135,7 @@ with tab_map:
     else:
         with col_right: st.info("Nhấn nút tối ưu bên trái để vẽ tuyến đường thực địa!")
 
-    with col_left: st_folium(m, width=700, height=450, key="vnpost_map_v7_final")
+    with col_left: st_folium(m, width=700, height=450, key="vnpost_map_v8_final")
 
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện")
