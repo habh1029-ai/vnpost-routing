@@ -16,7 +16,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Khôi phục đầy đủ danh mục bưu cục
 VNPOST_HUBS = {
     "Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Q1", "lat": 10.7891, "lon": 106.6910},
     "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Q1", "lat": 10.7798, "lon": 106.6999},
@@ -36,7 +35,6 @@ POPULAR_STOPS = {
     "hồ con rùa": [10.7827, 106.6961]
 }
 
-# Khôi phục dữ liệu biểu đồ nền
 D_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
 D_IDX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 W_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
@@ -45,6 +43,7 @@ W_IDX = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 if "map_ready" not in st.session_state: st.session_state.map_ready = False
 if "lines_cache" not in st.session_state: st.session_state.lines_cache = []
 if "text_cache" not in st.session_state: st.session_state.text_cache = []
+if "steps_cache" not in st.session_state: st.session_state.steps_cache = []
 
 with st.sidebar:
     st.write("### CẤU HÌNH PHÂN TUYẾN")
@@ -62,6 +61,7 @@ with st.sidebar:
         st.session_state.map_ready = True
         st.session_state.lines_cache = []
         st.session_state.text_cache = []
+        st.session_state.steps_cache = []
 
 st.markdown('<p class="main-title">VIETNAM POST - ĐIỀU HÀNH LOGISTICS ĐA ĐIỂM</p>', unsafe_allow_html=True)
 tab_monitor, tab_map, tab_order = st.tabs(["Trung tâm Giám sát", "Tối ưu Tuyến đường Đa điểm", "Quản lý Vận đơn"])
@@ -73,7 +73,6 @@ with tab_monitor:
     c2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
     c3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
     
-    # Khôi phục khu vực hiển thị hai biểu đồ phân tích sản lượng
     st.write("---")
     col_chart1, col_chart2 = st.columns(2)
     with col_chart1:
@@ -95,12 +94,16 @@ with tab_map:
     if st.session_state.map_ready:
         raw_lines = [line.strip().lower() for line in stops_input.split('\n') if line.strip()]
         base_coords = [[h_lon, h_lat]]
+        addr_mapping = {0: f"Xuất phát: {selected_hub}"}
         
+        step_idx = 1
         for stop_addr in raw_lines:
             for k, coords in POPULAR_STOPS.items():
                 if k in stop_addr:
                     base_coords.append([coords[1], coords[0]])
-                    folium.Marker([coords[0], coords[1]], tooltip=k, icon=folium.Icon(color='blue')).add_to(m)
+                    addr_mapping[step_idx] = stop_addr.title()
+                    folium.Marker([coords[0], coords[1]], tooltip=k.title(), icon=folium.Icon(color='blue')).add_to(m)
+                    step_idx += 1
 
         if len(base_coords) > 1 and not st.session_state.lines_cache:
             try:
@@ -113,6 +116,7 @@ with tab_map:
                 if res.get('code') == 'Ok':
                     raw_pts = res['trips'][0]['geometry']['coordinates']
                     st.session_state.lines_cache = [[p[1], p[0]] for p in raw_pts]
+                    
                     dist_km = res['trips'][0]['distance'] / 1000
                     time_mn = res['trips'][0]['duration'] / 60
                     fuel_rate = 2.5 if "máy" in vehicle_type else 9.0
@@ -122,6 +126,19 @@ with tab_map:
                         f"Ước tính thời gian: {time_mn:.1f} phút",
                         f"Chi phí nhiên liệu: {cost:.0f} VND"
                     ]
+                    
+                    # Tính toán thứ tự chặng di chuyển tối ưu (Waypoints) từ API OSRM
+                    waypoints = sorted(res.get('waypoints', []), key=lambda x: x['waypoint_index'])
+                    steps_list = []
+                    order_num = 1
+                    for wp in waypoints:
+                        w_idx = wp['waypoint_index']
+                        if w_idx == 0:
+                            steps_list.append(f"🚩 {addr_mapping[w_idx]}")
+                        else:
+                            steps_list.append(f"➔ Chặng {order_num}: {addr_mapping[w_idx]}")
+                            order_num += 1
+                    st.session_state.steps_cache = steps_list
             except Exception as e:
                 st.session_state.lines_cache = []
 
@@ -129,13 +146,20 @@ with tab_map:
             folium.PolyLine(st.session_state.lines_cache, color="#0056b3", weight=6, opacity=0.9).add_to(m)
             with col_right:
                 st.write("##### THÔNG TIN LỘ TRÌNH ĐÃ TỐI ƯU")
-                for txt in st.session_state.text_cache: st.info(txt)
+                for txt in st.session_state.text_cache: 
+                    st.info(txt)
+                
+                # Hiển thị dữ liệu các chặng tuần tự thực tế
+                st.write("---")
+                st.write("**Thứ tự di chuyển đề xuất:**")
+                for step_text in st.session_state.steps_cache:
+                    st.write(step_text)
         else:
-            with col_right: st.warning("Đã hiển thị các điểm ghim dữ liệu.")
+            with col_right: st.warning("Đã ghim các tọa độ bưu cục lên hệ thống.")
     else:
         with col_right: st.info("Nhấn nút tối ưu bên trái để vẽ tuyến đường thực địa!")
 
-    with col_left: st_folium(m, width=700, height=450, key="vnpost_map_v8_final")
+    with col_left: st_folium(m, width=700, height=450, key="vnpost_map_v9_ultimate")
 
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện")
