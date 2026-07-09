@@ -62,7 +62,7 @@ POPULAR_STOPS = {
     "02 võ oanh": [10.8021, 106.7142]
 }
 
-# 4. DỮ LIỆU THỐNG KÊ BIỂU ĐỒ (ĐÃ SỬA CÚ PHÁP ĐÓNG MỞ)
+# 4. DỮ LIỆU THỐNG KÊ BIỂU ĐỒ
 DISTRICT_DATA = {
     "Thành công": [420, 380, 290, 180, 150],
     "Hoàn lại": [15, 22, 12, 8, 19]
@@ -116,7 +116,7 @@ def get_coordinates_from_address(address_text):
     try:
         full_query = f"{address_text}, Ho Chi Minh City, Vietnam"
         url = f"https://nominatim.openstreetmap.org/search?q={requests.utils.quote(full_query)}&format=json&limit=1"
-        headers = {"User-Agent": "vietnam_post_routing_app_2026_v6"}
+        headers = {"User-Agent": "vietnam_post_routing_app_2026_v7"}
         response = requests.get(url, headers=headers, timeout=5).json()
         if response:
             return {"lat": float(response[0]["lat"]), "lon": float(response[0]["lon"])}
@@ -141,4 +141,77 @@ with st.sidebar:
     stops_input = st.text_area("Các điểm dừng phát hàng:", value=default_stops, height=120)
     
     vehicle_type = st.radio("Phương tiện vận chuyển:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
-    activated = st.button("TỐI ƯU HÓA LỘ TR
+    # Đã rút gọn chuỗi văn bản trên nút bấm để bảo đảm không lỗi cú pháp
+    activated = st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA")
+
+# 6. HIỂN THỊ TIÊU ĐỀ TRANG CHÍNH TIẾNG VIỆT CÓ DẤU
+st.markdown('<p class="main-title">VIETNAM POST - ĐIỀU HÀNH LOGISTICS ĐA ĐIỂM</p>', unsafe_allow_html=True)
+st.write("*Hệ thống trực quan hóa mạng lưới điều phối, định tuyến chuỗi điểm dừng chặng cuối real-time*")
+
+tab_monitor, tab_map, tab_order = st.tabs([
+    "Trung tâm Giám sát", 
+    "Tối ưu Tuyến đường Đa điểm", 
+    "Quản lý Vận đơn"
+])
+
+# ------------------------------------------
+# TAB 1: TRUNG TÂM GIÁM SÁT THỐNG KÊ
+# ------------------------------------------
+with tab_monitor:
+    st.write(f"**Đang giám sát:** {selected_start_hub}")
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">ĐA GIAO POD</p><h3 style="margin:5px 0 0 0; color:#0056b3;">1.420 kiện</h3></div>', unsafe_allow_html=True)
+    with col_m2:
+        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">BƯU TÁ THỰC ĐỊA</p><h3 style="margin:5px 0 0 0; color:#0056b3;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
+    with col_m3:
+        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">TỶ LỆ TOÀN TRÌNH</p><h3 style="margin:5px 0 0 0; color:#e67e22;">94.8 %</h3></div>', unsafe_allow_html=True)
+
+    st.write("---")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        st.write("#### Sản lượng giao thành công theo quận")
+        st.bar_chart(pd.DataFrame(DISTRICT_DATA, index=DISTRICT_INDEX), color=["#0056b3", "#ffc745"])
+    with col_c2:
+        st.write("#### Trọng tải vận chuyển trong tuần (Tấn)")
+        st.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
+
+# ------------------------------------------
+# TAB 2: TỐI ƯU TUYẾN ĐƯỜNG ĐA ĐIỂM & BẢN ĐỒ
+# ------------------------------------------
+with tab_map:
+    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế")
+    col_left, col_right = st.columns([1.8, 1.2])
+    
+    start_lat = VNPOST_HUBS[selected_start_hub]["lat"]
+    start_lon = VNPOST_HUBS[selected_start_hub]["lon"]
+    
+    m = folium.Map(location=[start_lat, start_lon], zoom_start=14)
+    Fullscreen(position="topleft", title="Mở rộng bản đồ", title_cancel="Thoát chế độ toàn màn hình", force_separate_button=True).add_to(m)
+
+    if activated:
+        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
+        if raw_stops:
+            try:
+                all_coordinates = [[start_lat, start_lon]]
+                valid_names = [f"Xuất phát: {selected_start_hub}"]
+                
+                for idx, stop_addr in enumerate(raw_stops, 1):
+                    loc = get_coordinates_from_address(stop_addr)
+                    if loc:
+                        all_coordinates.append([loc['lat'], loc['lon']])
+                        valid_names.append(f"Điểm {idx}: {stop_addr}")
+                
+                if len(all_coordinates) >= 2:
+                    total_dist = 0.0
+                    total_time = 0.0
+                    m = folium.Map(location=all_coordinates[0], zoom_start=14)
+                    Fullscreen(position="topleft", title="Mở rộng bản đồ", title_cancel="Thoát chế độ toàn màn hình", force_separate_button=True).add_to(m)
+                    
+                    folium.Marker(all_coordinates[0], tooltip="XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                    
+                    for i in range(len(all_coordinates) - 1):
+                        p_start = all_coordinates[i]
+                        p_end = all_coordinates[i+1]
+                        
+                        folium.Marker(p_end
