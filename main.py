@@ -5,10 +5,8 @@ import math
 import requests
 import pandas as pd
 from streamlit_folium import folium_static
-import time
 
-# 1. CẤU HÌNH GIAO DIỆN
-st.set_page_config(page_title="VNPOST - Điều hành Logistics Đa điểm", layout="wide")
+st.set_page_config(page_title="VNPOST Logistics", layout="wide")
 
 st.markdown("""
     <style>
@@ -18,7 +16,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. CƠ SỞ DỮ LIỆU TĨNH (ĐÃ FIX TỌA ĐỘ TRÁNH BLOCK API)
 VNPOST_HUBS = {
     "Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Quận 1", "lat": 10.7891, "lon": 106.6910},
     "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Quận 1", "lat": 10.7798, "lon": 106.6999},
@@ -29,11 +26,8 @@ VNPOST_HUBS = {
 }
 
 POPULAR_STOPS = {
-    "100 cao thắng": [10.7745, 106.6811], 
-    "320 nguyễn du": [10.7712, 106.6945],
-    "hồ con rùa": [10.7827, 106.6961], 
-    "220 hồ con rùa": [10.7827, 106.6961], 
-    "02 võ oanh": [10.8021, 106.7142]
+    "100 cao thắng": [10.7745, 106.6811], "320 nguyễn du": [10.7712, 106.6945],
+    "hồ con rùa": [10.7827, 106.6961], "220 hồ con rùa": [10.7827, 106.6961], "02 võ oanh": [10.8021, 106.7142]
 }
 
 DISTRICT_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
@@ -43,40 +37,28 @@ WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"
 
 if "orders_df" not in st.session_state:
     st.session_state.orders_df = pd.DataFrame({
-        "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN20481HCM", "VN39482HCM", "VN84920HCM", "VN74829HCM", "VN19482HCM", "VN63920HCM", "VN52910HCM", "VN48291HCM", "VN30291HCM", "VN91029HCM"],
-        "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D", "Hoàng Thục E", "Đỗ Tiến F", "Bùi Quang G", "Vũ Tuyết H", "Ngô Quốc I", "Lý Thanh J", "Dương Thúy K", "Tống Gia L", "Trịnh Đình M"],
-        "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "12 Lê Lợi, Q1", "45 Nguyễn Huệ, Q1", "88 Nam Kỳ Khởi Nghĩa, Q1", "150 Nguyễn Thị Minh Khai, Q3", "200 Cách Mạng Tháng 8, Q3", "15 Trần Hưng Đạo, Q5", "50 An Dương Vương, Q5", "300 Nguyễn Thị Thập, Q7", "55 Nguyễn Văn Linh, Q7", "105 Khánh Hội, Q4"],
-        "Loại Hàng Hóa": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Quần áo thời trang", "Mỹ phẩm cao cấp", "Giày dép thể thao", "Sách & Văn phòng phẩm", "Đồ gia dụng nhỏ", "Thực phẩm khô", "Trái cây nhập khẩu", "Thiết bị y tế", "Đồ chơi trẻ em", "Phụ kiện máy tính"],
-        "Trạng Thái": ["Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển"]
+        "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
+        "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C"],
+        "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3"],
+        "Loại Hàng Hóa": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn"],
+        "Trạng Thái": ["Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển"]
     })
 
 def get_coordinates_from_address(address_text):
     clean_addr = address_text.lower().strip()
     for key, coords in POPULAR_STOPS.items():
-        if key in clean_addr: 
-            return {"lat": coords[0], "lon": coords[1]}
-    try:
-        time.sleep(0.5) # Thêm khoảng trễ an toàn tránh bị block API
-        url = f"https://nominatim.openstreetmap.org/search?q={requests.utils.quote(address_text + ', Ho Chi Minh, VN')}&format=json&limit=1"
-        res = requests.get(url, headers={"User-Agent": "vnpost_routing_system_2026"}, timeout=5).json()
-        if res: 
-            return {"lat": float(res[0]["lat"]), "lon": float(res[0]["lon"])}
-    except: 
-        pass
-    # Tọa độ dự phòng thông minh cố định không đổi để tránh crash giao diện
+        if key in clean_addr: return {"lat": coords[0], "lon": coords[1]}
     return {"lat": 10.7760, "lon": 106.7032}
 
-# 3. THANH SIDEBAR
 with st.sidebar:
     st.write("### CẤU HÌNH PHÂN TUYẾN")
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     st.text_area("Địa chỉ bưu cục điều phối:", value=VNPOST_HUBS[selected_start_hub]["address"], height=70, disabled=True)
     st.write("---")
-    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="100 Cao Thắng\n320 Nguyễn Du\nHồ Con Rùa\n02 Võ Oanh", height=120)
+    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="100 Cao Thắng\n320 Nguyễn Du\nHồ Con Rùa", height=120)
     vehicle_type = st.radio("Phương tiện vận chuyển:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
     activated = st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA")
 
-# 4. GIAO DIỆN CHÍNH
 st.markdown('<p class="main-title">VIETNAM POST - ĐIỀU HÀNH LOGISTICS ĐA ĐIỂM</p>', unsafe_allow_html=True)
 tab_monitor, tab_map, tab_order = st.tabs(["Trung tâm Giám sát", "Tối ưu Tuyến đường Đa điểm", "Quản lý Vận đơn"])
 
@@ -94,4 +76,63 @@ with tab_monitor:
     col_c2.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
 
 with tab_map:
-    st.write("
+    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế")
+    col_left, col_right = st.columns([1.8, 1.2])
+    start_lat, start_lon = VNPOST_HUBS[selected_start_hub]["lat"], VNPOST_HUBS[selected_start_hub]["lon"]
+    
+    m = folium.Map(location=[start_lat, start_lon], zoom_start=14)
+    Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
+
+    if activated:
+        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
+        if raw_stops:
+            try:
+                all_coordinates = [[start_lat, start_lon]]
+                valid_names = [f"Xuất phát: {selected_start_hub}"]
+                for idx, stop_addr in enumerate(raw_stops, 1):
+                    loc = get_coordinates_from_address(stop_addr)
+                    if loc:
+                        all_coordinates.append([loc['lat'], loc['lon']])
+                        valid_names.append(f"Điểm {idx}: {stop_addr}")
+                
+                if len(all_coordinates) >= 2:
+                    total_dist, total_time = 0.0, 0.0
+                    m = folium.Map(location=all_coordinates[0], zoom_start=14)
+                    Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
+                    folium.Marker(all_coordinates[0], tooltip="XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                    
+                    for i in range(len(all_coordinates) - 1):
+                        p_start, p_end = all_coordinates[i], all_coordinates[i+1]
+                        folium.Marker(p_end, tooltip=valid_names[i+1], icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                        url = f"http://router.project-osrm.org/route/v1/driving/{p_start[1]},{p_start[0]};{p_end[1]},{p_end[0]}?overview=full&geometries=geojson"
+                        try:
+                            res = requests.get(url, timeout=5).json()
+                            if res.get('code') == 'Ok':
+                                chunk = res['routes'][0]
+                                total_dist += chunk['distance'] / 1000
+                                total_time += chunk['duration'] / 60
+                                folium.PolyLine([[c[1], c[0]] for c in chunk['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.8).add_to(m)
+                        except:
+                            folium.PolyLine([p_start, p_end], color="#ef4444", weight=4, dash_array='5, 5').add_to(m)
+                            total_dist += math.sqrt((p_start[0]-p_end[0])**2 + (p_start[1]-p_end[1])**2) * 111
+                            total_time += (total_dist * 2)
+                    
+                    fuel = 2.5 if "máy" in vehicle_type else 9.0
+                    with col_right:
+                        st.write("##### THÔNG TIN HÀNH TRÌNH")
+                        st.info(f"Quãng đường: {total_dist:.2f} km\n\nThời gian: {total_time:.1f} phút\n\nNhiên liệu: {(total_dist/100)*fuel*23000:.0f} VND")
+                        st.write("---")
+                        for name in valid_names: st.write(f"- {name}")
+            except Exception as e: st.error(f"Lỗi: {e}")
+    else:
+        folium.Marker([start_lat, start_lon], tooltip=selected_start_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
+        with col_right: st.info("Nhấn nút bên trái để kích hoạt tối ưu lộ trình!")
+        
+    with col_left: folium_static(m, width=700, height=450)
+
+with tab_order:
+    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
+    updated_df = st.data_editor(st.session_state.orders_df, use_container_width=True, disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], column_config={"Trạng Thái": st.column_config.SelectboxColumn("Trạng Thái", options=["Chờ phân loại", "Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], required=True)})
+    if not updated_df.equals(st.session_state.orders_df):
+        st.session_state.orders_df = updated_df
+        st.toast("Đã tự động lưu thay đổi!", icon="💾")
