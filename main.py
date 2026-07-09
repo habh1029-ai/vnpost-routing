@@ -2,15 +2,14 @@ import streamlit as st
 import folium
 from folium.plugins import Fullscreen
 import requests
-import pandas as pd
 from streamlit_folium import st_folium
 
 st.set_page_config(page_title="VNPOST Logistics", layout="wide")
 
 st.markdown("""<style>.main-title { font-size: 2rem; font-weight: 800; color: #0056b3; border-bottom: 4px solid #F2A900; padding-bottom: 10px; } .metric-card { background: #f8fafc; border-left: 5px solid #F2A900; border-radius: 8px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); } div.stButton > button { background: #F2A900; color: #003366!important; font-weight: bold; width: 100%; }</style>""", unsafe_allow_html=True)
 
-VNPOST_HUBS = {"Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Q1", "lat": 10.7891, "lon": 106.6910}, "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Q1", "lat": 10.7798, "lon": 106.6999}, "Bưu cục Quận 3": {"address": "2Bis Bà Huyện Thanh Quan, Q3", "lat": 10.7770, "lon": 106.6853}}
-POPULAR_STOPS = {"120 cách mạng tháng tám": [10.7792, 106.6881], "240 điện biên phủ": [10.7865, 106.6915], "312 võ thị sáu": [10.7849, 106.6872], "02 võ oanh": [10.8021, 106.7142]}
+VNPOST_HUBS = {"Bưu cục Tân Định (Q1)": {"address": "230 Hai Bà Trưng, Q1", "lat": 10.7891, "lon": 106.6910}, "Bưu cục Giao dịch Sài Gòn (Q1)": {"address": "2 Công xã Paris, Q1", "lat": 10.7798, "lon": 106.6999}}
+POPULAR_STOPS = {"120 cách mạng tháng tám": [10.7792, 106.6881], "240 điện biên phủ": [10.7865, 106.6915], "312 võ thị sáu": [10.7849, 106.6872]}
 
 if "map_ready" not in st.session_state: st.session_state.map_ready = False
 if "lines_cache" not in st.session_state: st.session_state.lines_cache = []
@@ -19,9 +18,8 @@ if "text_cache" not in st.session_state: st.session_state.text_cache = []
 with st.sidebar:
     st.write("### CẤU HÌNH PHÂN TUYẾN")
     selected_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
-    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/ địa chỉ):", value="120 Cách Mạng Tháng Tám\n240 Điện Biên Phủ\n312 Võ Thị Sáu\n02 Võ Oanh", height=120)
-    vehicle_type = st.radio("Phương tiện vận chuyển:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
-    
+    stops_input = st.text_area("Các điểm dừng phát hàng:", value="120 Cách Mạng Tháng Tám\n240 Điện Biên Phủ\n312 Võ Thị Sáu", height=120)
+    vehicle_type = st.radio("Phương tiện:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
     if st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA"):
         st.session_state.map_ready = True
         st.session_state.lines_cache = []
@@ -38,13 +36,13 @@ with tab_monitor:
     c3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
 
 with tab_map:
-    st.write("### Bản đồ điều phối chuỗi điểm giao hàng (Giải thuật TSP tự động gom điểm gần)")
+    st.write("### Bản đồ điều phối chuỗi điểm giao hàng")
     col_left, col_right = st.columns([1.8, 1.2])
     h_lat, h_lon = VNPOST_HUBS[selected_hub]["lat"], VNPOST_HUBS[selected_hub]["lon"]
     
-    m = folium.Map(location=[h_lat, h_lon], zoom_start=13)
+    m = folium.Map(location=[h_lat, h_lon], zoom_start=14)
     Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
-    folium.Marker([h_lat, h_lon], tooltip="BƯU CỤC XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
+    folium.Marker([h_lat, h_lon], tooltip="XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
 
     if st.session_state.map_ready:
         raw_lines = [line.strip().lower() for line in stops_input.split('\n') if line.strip()]
@@ -62,4 +60,29 @@ with tab_map:
                 url = f"http://router.project-osrm.org/trip/v1/driving/{coord_str}?source=first&destination=any&overview=full&geometries=geojson"
                 res = requests.get(url, timeout=5).json()
                 if res.get('code') == 'Ok':
-                    st.session_state.lines_cache = [[c[1], c[0]] for c in res
+                    raw_pts = res['trips'][0]['geometry']['coordinates']
+                    st.session_state.lines_cache = [[p[1], p[0]] for p in raw_pts]
+                    dist_km = res['trips'][0]['distance'] / 1000
+                    time_mn = res['trips'][0]['duration'] / 60
+                    fuel_rate = 2.5 if "máy" in vehicle_type else 9.0
+                    cost = (dist_km / 100) * fuel_rate * 23000
+                    st.session_state.text_cache = [f"Tổng quãng đường: {dist_km:.2f} km", f"Ước tính thời gian: {time_mn:.1f} phút", f"Chi phí nhiên liệu: {cost:.0f} VND"]
+            except Exception as e:
+                st.session_state.lines_cache = []
+
+        if st.session_state.lines_cache:
+            folium.PolyLine(st.session_state.lines_cache, color="#0056b3", weight=6, opacity=0.9).add_to(m)
+            with col_right:
+                st.write("##### THÔNG TIN LỘ TRÌNH ĐÃ TỐI ƯU")
+                for txt in st.session_state.text_cache: st.info(txt)
+        else:
+            with col_right: st.warning("Đã hiển thị các điểm ghim dữ liệu.")
+    else:
+        with col_right: st.info("Nhấn nút tối ưu bên trái để vẽ tuyến đường thực địa!")
+
+    with col_left: st_folium(m, width=700, height=450, key="vnpost_map_v6_stable")
+
+with tab_order:
+    st.write("### Danh sách kiểm soát bưu kiện")
+    st.write("- VN94827HCM: Đang vận chuyển chặng cuối")
+    st.write("- VN10482HCM: Đang vận chuyển chặng cuối")
