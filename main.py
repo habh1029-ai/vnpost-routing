@@ -60,22 +60,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM (ĐÃ CHUẨN HÓA ĐỊA CHỈ ĐỂ TRA CỨU API)
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM (ĐÃ CHUẨN HÓA ĐỊA CHỈ ĐỂ TRA CỨU API CHÍNH XÁC)
 VNPOST_HUBS = {
-    "Bưu cục Giao dịch Sài Gòn": "2 Công xã Paris, Quận 1",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Bà Trưng, Quận 1",
-    "Bưu cục Tân Định": "230 Hai Bà Trưng, Quận 1",
-    "Bưu cục Trần Hưng Đạo": "447B Trần Hưng Đạo, Quận 1",
-    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Quận 3",
-    "Bưu cục Bàn Cờ": "49A Cao Thắng, Quận 3",
-    "Bưu cục Vườn Xoài": "472 Lê Văn Sỹ, Quận 3",
-    "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Quận 4",
-    "Bưu cục Khánh Hội": "52 Lê Quốc Hưng, Quận 4",
-    "Bưu cục Nguyễn Trãi": "49 Nguyễn Trãi, Quận 5",
-    "Bưu cục Quận 5": "26 Nguyễn Thi, Quận 5",
-    "Bưu cục Quận 6": "88 Tháp Mười, Quận 6",
-    "Bưu cục Tân Phong": "565 Nguyễn Thị Thập, Quận 7",
-    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Quận 7"
+    "Bưu cục Tân Định (Q1)": "230 Hai Ba Trung, Quan 1",
+    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Cong xa Paris, Quan 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Ba Trung, Quan 1",
+    "Bưu cục Trần Hưng Đạo (Q1)": "447B Tran Hung Dao, Quan 1",
+    "Bưu cục Quận 3": "2Bis Ba Huyen Thanh Quan, Quan 3",
+    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thang, Quan 3",
+    "Bưu cục Vườn Xoài (Q3)": "472 Le Van Sy, Quan 3",
+    "Bưu cục Quận 4": "104 Nguyen Tat Thanh, Quan 4",
+    "Bưu cục Khánh Hội (Q4)": "52 Le Quoc Hung, Quan 4",
+    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyen Trai, Quan 5",
+    "Bưu cục Quận 5": "26 Nguyen Thi, Quan 5",
+    "Bưu cục Quận 6": "88 Thap Muoi, Quan 6",
+    "Bưu cục Tân Phong (Q7)": "565 Nguyen Thi Thap, Quan 7",
+    "Bưu cục Quận 7": "1441 Huynh Tan Phat, Quan 7"
 }
 
 def get_coordinates_from_address(address_text):
@@ -198,4 +198,99 @@ with tab_routing:
                             st.error(f"❌ Không tìm thấy vị trí địa chỉ khách hàng: '{end_input}'")
                             folium_static(m, width=700, height=480)
                     else:
-                        url = f"http://router.project-osrm.org/route/v1/driving/{loc
+                        # GỌI API ĐỊNH TUYẾN OSRM VỚI CHUỖI F-STRING ĐƯỢC ĐÓNG NGOẶC CHUẨN XÁC
+                        lon1, lat1 = loc1['lon'], loc1['lat']
+                        lon2, lat2 = loc2['lon'], loc2['lat']
+                        url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson"
+                        response = requests.get(url).json()
+                        
+                        if response.get('code') == 'Ok':
+                            route_data = response['routes'][0]
+                            detailed_route_gps = [[c[1], c[0]] for c in route_data['geometry']['coordinates']]
+                            distance_km = route_data['distance'] / 1000
+                            duration_min = route_data['duration'] / 60
+                            fuel = (distance_km / 100) * (2.5 if "🛵" in vehicle_type else 9.0) * 23000
+                            
+                            m = folium.Map(location=[(lat1+lat2)/2, (lon1+lon2)/2], zoom_start=15)
+                            folium.Marker([lat1, lon1], tooltip="Bưu cục phát", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                            folium.Marker([lat2, lon2], tooltip="Địa chỉ khách hàng", icon=folium.Icon(color='red', icon='flag')).add_to(m)
+                            folium.PolyLine(detailed_route_gps, color="#0056b3", weight=6, opacity=0.8).add_to(m)
+                            
+                            with col_left:
+                                st.markdown("""<div style='color:#15803d; font-weight:bold; margin-bottom:5px;'>✅ ĐÃ TỐI ƯU TUYẾN ĐƯỜNG THÀNH CÔNG</div>""", unsafe_allow_html=True)
+                                folium_static(m, width=700, height=480)
+                            with col_right:
+                                st.markdown("""##### 📱 Kết quả điều hành thực địa""")
+                                with st.container(border=True):
+                                    st.write(f"🛣️ **Quãng đường:** `{distance_km:.2f} km`")
+                                    st.write(f"⏱️ **Thời gian di chuyển dự kiến:** `{duration_min:.1f} phút`")
+                                    st.write(f"💰 **Chi phí nhiên liệu định mức:** `{fuel:.0f} VNĐ`")
+                                    st.markdown("---")
+                                    st.markdown("**🗺️ Chỉ đường chi tiết từng chặng:**")
+                                    for inst in generate_turn_by_turn(detailed_route_gps):
+                                        st.write(inst)
+                        else:
+                            with col_left:
+                                st.error("❌ Máy chủ định tuyến từ chối kết nối hoặc không tìm thấy lộ trình đường đi khả thi.")
+                                folium_static(m, width=700, height=480)
+            except Exception as e:
+                with col_left:
+                    st.error(f"❌ Sự cố hệ thống bản đồ: {e}")
+                    folium_static(m, width=700, height=480)
+    else:
+        with col_left:
+            folium_static(m, width=700, height=480)
+        with col_right:
+            st.info("💡 Hãy điền thông tin địa chỉ tại Sidebar bên trái và nhấn nút 'Tính toán lộ trình thực địa' để bắt đầu.")
+
+# ------------------------------------------
+# TAB 3: QUẢN LÝ TRẠNG THÁI VẬN ĐƠN
+# ------------------------------------------
+with tab_status:
+    st.markdown("""### 📦 Quản lý Trạng thái Vận đơn Chặng cuối""")
+    
+    mock_orders = {
+        "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
+        "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D"],
+        "Địa Chỉ": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "Vòng xoay Dân Chủ"],
+        "Loại Hàng": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Hàng dễ vỡ"]
+    }
+    df_orders = pd.DataFrame(mock_orders)
+    st.dataframe(df_orders, use_container_width=True)
+    
+    st.markdown("---")
+    
+    col_status1, col_status2 = st.columns([1, 1])
+    with col_status1:
+        st.markdown("""#### 🆔 Cập nhật tiến độ phát hàng""")
+        selected_order = st.selectbox("Chọn mã vận đơn cần cập nhật hành trình:", df_orders["Mã Vận Đơn"])
+        
+        status_options = [
+            "🛵 Bưu tá đang đi phát hàng chặng cuối",
+            "✅ Phát thành công (Đã ký nhận POD)",
+            "❌ Giao hàng thất bại / Khách hẹn lại ca sau",
+            "🚨 Báo cáo sự cố khẩn cấp phát sinh trên đường (SOS)"
+        ]
+        current_status = st.selectbox("Trạng thái vận đơn mới:", status_options, index=0)
+        
+        if "Thất bại" in current_status:
+            st.selectbox("Lý do chi tiết giao không thành công:", ["Khách thuê bao tắt máy không liên lạc được", "Khách hẹn ca tối", "Sai thông tin số nhà địa chỉ"])
+        elif "Thành công" in current_status:
+            st.file_uploader("📸 Tải lên ảnh chụp ký nhận thực tế tại nhà khách (Bằng chứng POD):", type=["jpg", "png", "jpeg"])
+        elif "SOS" in current_status:
+            st.error("🚨 HỆ THỐNG PHẢN ỨNG NHANH CỨU HỘ SỰ CỐ KHẨN CẤP")
+            st.text_area("Mô tả chi tiết tình huống bưu tá gặp phải:", placeholder="Ví dụ: Xe hỏng săm lốp tại ngã tư, cần xe hỗ trợ bốc hàng...")
+            
+        note = st.text_area("Ghi chú bổ sung của bưu tá thực địa:", value="Đang di chuyển.")
+        if st.button("💾 ĐỒNG BỘ DỮ LIỆU LÊN TỔNG ĐÀI VNPOST"):
+            st.toast("Đồng bộ trạng thái vận đơn thành công lên hệ thống trục chính!", icon="🚀")
+            
+    with col_status2:
+        st.markdown("""#### 🕒 Nhật ký hành trình (Timeline Chi tiết)""")
+        with st.container(border=True):
+            st.markdown(f"**Mã vận đơn kiểm tra:** `{selected_order}`")
+            st.markdown(f"📍 **Trạng thái thực tế:** `{current_status}`")
+            st.markdown("---")
+            st.markdown(f"- **[2026-07-09 10:55]** {current_status} | *Ghi chú: {note}*")
+            st.markdown("- **[2026-07-09 06:15]** 📥 Đã nhập kho phân chọn bưu cục chặng cuối thành công.")
+            st.markdown("- **[2026-07-08 14:20]** 🚚 Đang vận chuyển liên tỉnh trên trục bưu chính quốc gia Việt Nam.")
