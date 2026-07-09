@@ -79,4 +79,101 @@ with tab_monitor:
     st.write(f"**Đang giám sát:** {selected_start_hub}")
     col_m1, col_m2, col_m3 = st.columns(3)
     col_m1.markdown('<div class="metric-card"><b>ĐA GIAO POD</b><h3 style="color:#0056b3;margin:0;">1.420 kiện</h3></div>', unsafe_allow_html=True)
-    col_m2.markdown('<div class
+    col_m2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
+    col_m3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
+    st.write("---")
+    col_c1, col_c2 = st.columns(2)
+    col_c1.write("#### Sản lượng giao thành công theo quận")
+    col_c1.bar_chart(pd.DataFrame(DISTRICT_DATA, index=DISTRICT_INDEX), color=["#0056b3", "#ffc745"])
+    col_c2.write("#### Trọng tải vận chuyển trong tuần (Tấn)")
+    col_c2.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
+
+with tab_map:
+    st.write("### Bản đồ điều phối chuỗi điểm giao hàng (Giải thuật TSP tự động gom điểm gần)")
+    col_left, col_right = st.columns([1.8, 1.2])
+    start_lat, start_lon = VNPOST_HUBS[selected_start_hub]["lat"], VNPOST_HUBS[selected_start_hub]["lon"]
+    
+    m = folium.Map(location=[start_lat, start_lon], zoom_start=12)
+    Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
+
+    if activated:
+        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
+        if raw_stops:
+            try:
+                base_coords = [[start_lon, start_lat]]
+                addr_mapping = {0: f"Xuất phát từ {selected_start_hub}"}
+                
+                for idx, stop_addr in enumerate(raw_stops, 1):
+                    loc = get_coordinates_from_address(stop_addr)
+                    base_coords.append([loc['lon'], loc['lat']])
+                    addr_mapping[idx] = f"{stop_addr}"
+                
+                coord_string = ";".join([f"{c[0]},{c[1]}" for c in base_coords])
+                url = f"http://router.project-osrm.org/trip/v1/driving/{coord_string}?source=first&destination=any&overview=full&geometries=geojson"
+                
+                res = requests.get(url, timeout=5).json()
+                if res.get('code') == 'Ok':
+                    trip = res['trips'][0]
+                    waypoints = res['waypoints']
+                    
+                    total_dist = trip['distance'] / 1000
+                    total_time = trip['duration'] / 60
+                    
+                    folium.PolyLine([[c[1], c[0]] for c in trip['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.85).add_to(m)
+                    
+                    waypoints_sorted = sorted(waypoints, key=lambda x: x['waypoint_index'])
+                    optimized_names = []
+                    
+                    current_stop_number = 1
+                    for w in waypoints_sorted:
+                        w_idx = w['waypoint_index']
+                        curr_coords = [w['location'][1], w['location'][0]]
+                        
+                        if w_idx == 0:
+                            folium.Marker(curr_coords, tooltip="ĐIỂM XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                            optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
+                        else:
+                            folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                            optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
+                            current_stop_number += 1
+
+                    fuel = 2.5 if "máy" in vehicle_type else 9.0
+                    with col_right:
+                        st.write("##### THÔNG TIN LỘ TRÌNH ĐÃ TỐI ƯU THỨ TỰ")
+                        st.info(f"Tổng quãng đường: {total_dist:.2f} km\n\nƯớc tính thời gian: {total_time:.1f} phút\n\nNhiên liệu tiêu thụ: {(total_dist/100)*fuel*23000:.0f} VND")
+                        st.write("---")
+                        st.write("**Lộ trình đi tuần tự thông minh (gần xếp trước, xa xếp sau):**")
+                        for name in optimized_names: 
+                            st.write(name)
+                else:
+                    st.error("Không tìm thấy giải pháp tối ưu từ API.")
+            except Exception as e:
+                st.error(f"Lỗi xử lý thuật toán: {e}")
+    else:
+        folium.Marker([start_lat, start_lon], tooltip=selected_start_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
+        with col_right: 
+            st.info("Nhấn nút bên trái để hệ thống kích hoạt tự động sắp xếp điểm gần nhau!")
+        
+    with col_left: 
+        folium_static(m, width=700, height=450)
+
+with tab_order:
+    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
+    
+    updated_df = st.data_editor(
+        st.session_state.orders_data, 
+        use_container_width=True, 
+        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], 
+        column_config={
+            "Trạng Thái": st.column_config.SelectboxColumn(
+                "Trạng Thái", 
+                options=["Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], 
+                required=True
+            )
+        },
+        key="orders_editor"
+    )
+    
+    if not updated_df.equals(st.session_state.orders_data):
+        st.session_state.orders_data = updated_df
+        st.toast("Đã ghi nhận trạng thái đơn hàng mới vào hệ thống!", icon="💾")
