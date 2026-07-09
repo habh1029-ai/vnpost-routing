@@ -61,7 +61,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM ĐÃ ĐƯỢC LÀM SẠCH CHỮ QUẬN
 VNPOST_HUBS = {
     "Bưu cục Giao dịch Sài Gòn": "2 Công xã Paris, Quận 1",
     "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Bà Trưng, Quận 1",
@@ -120,93 +120,8 @@ tab_enterprise, tab_routing, tab_status = st.tabs([
     "📦 Quản lý Vận đơn"
 ])
 
-# TAB 1: GIÁM SÁT ĐƠN VỊ
+# ------------------------------------------
+# TAB 1: TRUNG TÂM GIÁM SÁT DOANH NGHIỆP
+# ------------------------------------------
 with tab_enterprise:
-    st.markdown("### 📊 Tổng quan Hoạt động Mạng lưới")
-    hub_selected = st.selectbox("Lựa chọn bưu cục dữ liệu:", list(VNPOST_HUBS.keys()))
-    st.markdown(f"<div style='background-color:#e0f2fe; padding:12px; border-radius:8px; border-left:4px solid #0284c7; color:#0369a1;'>📍 <b>Địa chỉ:</b> {VNPOST_HUBS[hub_selected]}</div>", unsafe_allow_html=True)
-    
-    col_m1, col_m2 = st.columns(2)
-    with col_m1:
-        st.markdown('<div class="metric-card"><b>ĐÃ GIAO THÀNH CÔNG</b><h2>1,420 kiện</h2><p style="color:#16a34a;">↗️ +12% hôm nay</p></div>', unsafe_allow_html=True)
-    with col_m2:
-        st.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h2>45 Nhân sự</h2><p style="color:#0284c7;">🔵 Sẵn sàng kết nối</p></div>', unsafe_allow_html=True)
-
-# TAB 2: TỐI ƯU TUYẾN ĐƯỜNG (THIẾT KẾ ĐÁP ỨNG DI ĐỘNG TUYỆT ĐỐI)
-with tab_routing:
-    st.markdown("### 🗺️ Định tuyến Di động thông minh")
-    
-    # ĐƯA PHẦN THIẾT LẬP VÀO KHUNG CHÍNH (BƯU TÁ DÙNG ĐIỆN THOẠI KHÔNG BỊ KHUẤT)
-    with st.container(border=True):
-        st.markdown("##### ⚡ Thiết lập Lộ trình Chặng cuối")
-        col_input1, col_input2 = st.columns([1, 1])
-        with col_input1:
-            selected_start_hub = st.selectbox("1. Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
-            start_input = st.text_input("Vị trí bưu cục phát:", value=VNPOST_HUBS[selected_start_hub])
-        with col_input2:
-            end_input = st.text_input("2. Nhập địa chỉ khách hàng nhận:", "100 Cao Thắng")
-            vehicle_type = st.radio("Phương tiện:", ["🛵 Xe máy bưu tá chặng cuối", "🚚 Xe tải bưu chính"], horizontal=True)
-        
-        activated = st.button("🚀 BẮT ĐẦU TÍNH TOÁN LỘ TRÌNH THỰC ĐỊA")
-
-    st.markdown("---")
-    col_left, col_right = st.columns([1.8, 1.2])
-
-    default_lat, default_lon = 10.7760, 106.7032
-    m = folium.Map(location=[default_lat, default_lon], zoom_start=14, control_scale=True)
-
-    if activated:
-        if not start_input.strip() or not end_input.strip():
-            st.warning("⚠️ Vui lòng điền đầy đủ thông tin vị trí!")
-        else:
-            try:
-                with st.spinner("🔍 Đang đồng bộ tọa độ vệ tinh GPS..."):
-                    loc1 = get_coordinates_from_address(start_input)
-                    loc2 = get_coordinates_from_address(end_input)
-                    
-                    if not loc1: st.error(f"❌ Không tìm thấy vị trí bưu cục: '{start_input}'")
-                    elif not loc2: st.error(f"❌ Không tìm thấy vị trí khách hàng: '{end_input}'")
-                    else:
-                        url = f"http://router.project-osrm.org/route/v1/driving/{loc1['lon']},{loc1['lat']};{loc2['lon']},{loc2['lat']}?overview=full&geometries=geojson"
-                        response = requests.get(url).json()
-                        
-                        if response.get('code') == 'Ok':
-                            route_data = response['routes'][0]
-                            detailed_route_gps = [[c[1], c[0]] for c in route_data['geometry']['coordinates']]
-                            distance_km = route_data['distance'] / 1000
-                            duration_min = route_data['duration'] / 60
-                            fuel = (distance_km / 100) * (2.5 if "🛵" in vehicle_type else 9.0) * 23000
-                            
-                            # Cập nhật bản đồ
-                            m = folium.Map(location=[(loc1['lat']+loc2['lat'])/2, (loc1['lon']+loc2['lon'])/2], zoom_start=15)
-                            folium.Marker([loc1['lat'], loc1['lon']], tooltip="Bưu cục", icon=folium.Icon(color='green', icon='play')).add_to(m)
-                            folium.Marker([loc2['lat'], loc2['lon']], tooltip="Khách hàng", icon=folium.Icon(color='red', icon='flag')).add_to(m)
-                            folium.PolyLine(detailed_route_gps, color="#0056b3", weight=6).add_to(m)
-                            
-                            with col_left:
-                                st.markdown("<div style='color:#15803d; font-weight:bold; margin-bottom:5px;'>✅ ĐÃ TỐI ƯU TUYẾN ĐƯỜNG</div>", unsafe_allow_html=True)
-                                folium_static(m, width=700, height=480)
-                            with col_right:
-                                st.markdown("##### 📱 Kết quả điều hành")
-                                with st.container(border=True):
-                                    st.write(f"🛣️ **Quãng đường:** `{distance_km:.2f} km`")
-                                    st.write(f"⏱️ **Thời gian dự kiến:** `{duration_min:.1f} phút`")
-                                    st.write(f"💰 **Trợ cấp nhiên liệu:** `{fuel:.0f} VNĐ`")
-                                    st.markdown("---")
-                                    for inst in generate_turn_by_turn(detailed_route_gps):
-                                        st.write(inst)
-                        else: st.error("❌ Lỗi kết nối dữ liệu máy chủ mạng lưới.")
-            except Exception as e: st.error(f"❌ Sự cố kết nối: {e}")
-    else:
-        with col_left: folium_static(m, width=700, height=480)
-        with col_right: st.info("💡 Nhấn nút tính toán để cập nhật dữ liệu bản đồ thời gian thực.")
-
-# TAB 3: TRẠNG THÁI VẬN ĐƠN
-with tab_status:
-    st.markdown("### 📦 Quản lý Trạng thái Vận đơn Chặng cuối")
-    df_orders = pd.DataFrame({
-        "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM"],
-        "Người Nhận": ["Nguyễn Văn A", "Trần Thị B"],
-        "Địa Chỉ": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1"]
-    })
-    st.dataframe(df_orders, use_container_width=True)
+    st.markdown("### 📊
