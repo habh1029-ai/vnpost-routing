@@ -43,7 +43,7 @@ DISTRICT_INDEX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 WEIGHT_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
-# SỬA LỖI KHÓA CHỐNG RE-WRITE: Kiểm tra bộ nhớ tạm, nếu chưa có mới tạo để tránh mất dữ liệu khi sửa bảng
+# Khởi tạo dữ liệu gốc trong session_state nếu chưa tồn tại
 if "orders_data" not in st.session_state:
     st.session_state.orders_data = pd.DataFrame({
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
@@ -105,72 +105,4 @@ with tab_map:
                     addr_mapping[idx] = f"{stop_addr}"
                 
                 coord_string = ";".join([f"{c[0]},{c[1]}" for c in base_coords])
-                url = f"http://router.project-osrm.org/trip/v1/driving/{coord_string}?source=first&destination=any&overview=full&geometries=geojson"
-                
-                res = requests.get(url, timeout=5).json()
-                if res.get('code') == 'Ok':
-                    trip = res['trips'][0]
-                    waypoints = res['waypoints']
-                    
-                    total_dist = trip['distance'] / 1000
-                    total_time = trip['duration'] / 60
-                    
-                    folium.PolyLine([[c[1], c[0]] for c in trip['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.85).add_to(m)
-                    
-                    waypoints_sorted = sorted(waypoints, key=lambda x: x['waypoint_index'])
-                    optimized_names = []
-                    
-                    current_stop_number = 1
-                    for w in waypoints_sorted:
-                        w_idx = w['waypoint_index']
-                        curr_coords = [w['location'][1], w['location'][0]]
-                        
-                        if w_idx == 0:
-                            folium.Marker(curr_coords, tooltip="ĐIỂM XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
-                            optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
-                        else:
-                            folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
-                            optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
-                            current_stop_number += 1
-
-                    fuel = 2.5 if "máy" in vehicle_type else 9.0
-                    with col_right:
-                        st.write("##### THÔNG TIN LỘ TRÌNH ĐÃ TỐI ƯU THỨ TỰ")
-                        st.info(f"Tổng quãng đường: {total_dist:.2f} km\n\nƯớc tính thời gian: {total_time:.1f} phút\n\nNhiên liệu tiêu thụ: {(total_dist/100)*fuel*23000:.0f} VND")
-                        st.write("---")
-                        st.write("**Lộ trình đi tuần tự thông minh (gần xếp trước, xa xếp sau):**")
-                        for name in optimized_names: 
-                            st.write(name)
-                else:
-                    st.error("Không tìm thấy giải pháp tối ưu từ API.")
-            except Exception as e:
-                st.error(f"Lỗi xử lý thuật toán: {e}")
-    else:
-        folium.Marker([start_lat, start_lon], tooltip=selected_start_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
-        with col_right: 
-            st.info("Nhấn nút bên trái để hệ thống kích hoạt tự động sắp xếp điểm gần nhau!")
-        
-    with col_left: 
-        folium_static(m, width=700, height=450)
-
-with tab_order:
-    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
-    
-    # Sử dụng đúng tên biến đồng bộ trong st.session_state
-    updated_df = st.data_editor(
-        st.session_state.orders_data, 
-        use_container_width=True, 
-        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], 
-        column_config={
-            "Trạng Thái": st.column_config.SelectboxColumn(
-                "Trạng Thái", 
-                options=["Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], 
-                required=True
-            )
-        }
-    )
-    
-    # Đồng bộ lưu đè ngay lập tức khi bưu tá đổi trạng thái đơn hàng
-    if not updated_df.equals(st.session_state.orders_data):
-        st.session_state.orders_data = updated_df
-        st.toast("Đã cập nhật trạng thái đơn hàng thành công!", icon="💾")
+                url = f"
