@@ -32,7 +32,10 @@ POPULAR_STOPS = {
     "680 xô viết nghệ tĩnh": [10.8122, 106.7161],
     "100 cao thắng": [10.7745, 106.6811], 
     "320 nguyễn du": [10.7712, 106.6945],
-    "hồ con rùa": [10.7827, 106.6961]
+    "hồ con rùa": [10.7827, 106.6961],
+    "120 cách mạng tháng tám": [10.7792, 106.6881],
+    "240 điện biên phủ": [10.7865, 106.6915],
+    "312 võ thị sáu": [10.7849, 106.6872]
 }
 
 DISTRICT_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
@@ -40,8 +43,9 @@ DISTRICT_INDEX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 WEIGHT_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
-if "orders_df" not in st.session_state:
-    st.session_state.orders_df = pd.DataFrame({
+# SỬA LỖI KHÓA CHỐNG RE-WRITE: Kiểm tra bộ nhớ tạm, nếu chưa có mới tạo để tránh mất dữ liệu khi sửa bảng
+if "orders_data" not in st.session_state:
+    st.session_state.orders_data = pd.DataFrame({
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
         "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C"],
         "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3"],
@@ -60,7 +64,7 @@ with st.sidebar:
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     st.text_area("Địa chỉ bưu cục điều phối:", value=VNPOST_HUBS[selected_start_hub]["address"], height=70, disabled=True)
     st.write("---")
-    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="02 Võ Oanh\n100 Xa Lộ Hà Nội\n14 Tân Quy\n680 Xô Viết Nghệ Tĩnh", height=120)
+    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="120 Cách Mạng Tháng Tám\n240 Điện Biên Phủ\n312 Võ Thị Sáu\n02 Võ Oanh", height=120)
     vehicle_type = st.radio("Phương tiện vận chuyển:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
     activated = st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA")
 
@@ -113,11 +117,9 @@ with tab_map:
                     
                     folium.PolyLine([[c[1], c[0]] for c in trip['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.85).add_to(m)
                     
-                    # Giải thuật sửa lỗi: Sắp xếp các điểm dừng dựa theo thuộc tính thứ tự hành trình thực tế trong chuỗi cung ứng
                     waypoints_sorted = sorted(waypoints, key=lambda x: x['waypoint_index'])
                     optimized_names = []
                     
-                    # Gán chỉ số chặng tăng dần thực tế bắt đầu từ 1
                     current_stop_number = 1
                     for w in waypoints_sorted:
                         w_idx = w['waypoint_index']
@@ -153,7 +155,22 @@ with tab_map:
 
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
-    updated_df = st.data_editor(st.session_state.orders_df, use_container_width=True, disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], column_config={"Trạng Thái": st.column_config.SelectboxColumn("Trạng Thái", options=["Chờ phân loại", "Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], required=True)})
-    if not updated_df.equals(st.session_state.orders_df):
-        st.session_state.orders_df = updated_df
-        st.toast("Đã tự động lưu thay đổi!", icon="💾")
+    
+    # Sử dụng đúng tên biến đồng bộ trong st.session_state
+    updated_df = st.data_editor(
+        st.session_state.orders_data, 
+        use_container_width=True, 
+        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], 
+        column_config={
+            "Trạng Thái": st.column_config.SelectboxColumn(
+                "Trạng Thái", 
+                options=["Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], 
+                required=True
+            )
+        }
+    )
+    
+    # Đồng bộ lưu đè ngay lập tức khi bưu tá đổi trạng thái đơn hàng
+    if not updated_df.equals(st.session_state.orders_data):
+        st.session_state.orders_data = updated_df
+        st.toast("Đã cập nhật trạng thái đơn hàng thành công!", icon="💾")
