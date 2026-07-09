@@ -65,34 +65,36 @@ WEIGHT_DATA = {
 }
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
-# TỔNG CỘNG ĐỦ 13 VẬN ĐƠN KHÔNG LỖI CÚ PHÁP
-MOCK_ORDERS = {
-    "Mã Vận Đơn": [
-        "VN94827HCM", "VN10482HCM", "VN58291HCM", "VN20481HCM", "VN39482HCM",
-        "VN84920HCM", "VN74829HCM", "VN19482HCM", "VN63920HCM", "VN52910HCM",
-        "VN48291HCM", "VN30291HCM", "VN91029HCM"
-    ],
-    "Người Nhận": [
-        "Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D", "Hoàng Thục E",
-        "Đỗ Tiến F", "Bùi Quang G", "Vũ Tuyết H", "Ngô Quốc I", "Lý Thanh J",
-        "Dương Thúy K", "Tống Gia L", "Trịnh Đình M"
-    ],
-    "Địa Chỉ Giao Hàng": [
-        "100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "12 Lê Lợi, Q1", "45 Nguyễn Huệ, Q1",
-        "88 Nam Kỳ Khởi Nghĩa, Q1", "150 Nguyễn Thị Minh Khai, Q3", "200 Cách Mạng Tháng 8, Q3", "15 Trần Hưng Đạo, Q5", "50 An Dương Vương, Q5",
-        "300 Nguyễn Thị Thập, Q7", "55 Nguyễn Văn Linh, Q7", "105 Khánh Hội, Q4"
-    ],
-    "Loại Hàng Hóa": [
-        "Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Quần áo thời trang", "Mỹ phẩm cao cấp",
-        "Giày dép thể thao", "Sách & Văn phòng phẩm", "Đồ gia dụng nhỏ", "Thực phẩm khô", "Trái cây nhập khẩu",
-        "Thiết bị y tế", "Đồ chơi trẻ em", "Phụ kiện máy tính"
-    ],
-    "Trạng Thái": [
-        "Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
-        "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
-        "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển"
-    ]
-}
+# KHỞI TẠO STATE ĐỂ LƯU TRỮ TRẠNG THÁI ĐƠN HÀNG KHI CẬP NHẬT REAL-TIME
+if "orders_df" not in st.session_state:
+    raw_data = {
+        "Mã Vận Đơn": [
+            "VN94827HCM", "VN10482HCM", "VN58291HCM", "VN20481HCM", "VN39482HCM",
+            "VN84920HCM", "VN74829HCM", "VN19482HCM", "VN63920HCM", "VN52910HCM",
+            "VN48291HCM", "VN30291HCM", "VN91029HCM"
+        ],
+        "Người Nhận": [
+            "Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D", "Hoàng Thục E",
+            "Đỗ Tiến F", "Bùi Quang G", "Vũ Tuyết H", "Ngô Quốc I", "Lý Thanh J",
+            "Dương Thúy K", "Tống Gia L", "Trịnh Đình M"
+        ],
+        "Địa Chỉ Giao Hàng": [
+            "100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "12 Lê Lợi, Q1", "45 Nguyễn Huệ, Q1",
+            "88 Nam Kỳ Khởi Nghĩa, Q1", "150 Nguyễn Thị Minh Khai, Q3", "200 Cách Mạng Tháng 8, Q3", "15 Trần Hưng Đạo, Q5", "50 An Dương Vương, Q5",
+            "300 Nguyễn Thị Thập, Q7", "55 Nguyễn Văn Linh, Q7", "105 Khánh Hội, Q4"
+        ],
+        "Loại Hàng Hóa": [
+            "Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Quần áo thời trang", "Mỹ phẩm cao cấp",
+            "Giày dép thể thao", "Sách & Văn phòng phẩm", "Đồ gia dụng nhỏ", "Thực phẩm khô", "Trái cây nhập khẩu",
+            "Thiết bị y tế", "Đồ chơi trẻ em", "Phụ kiện máy tính"
+        ],
+        "Trạng Thái": [
+            "Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
+            "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
+            "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển"
+        ]
+    }
+    st.session_state.orders_df = pd.DataFrame(raw_data)
 
 # Hàm định vị lấy tọa độ từ địa chỉ chuỗi thông qua Nominatim OpenStreetMap API
 def get_coordinates_from_address(address_text):
@@ -235,8 +237,42 @@ with tab_map:
             st.info("Vui lòng điền danh sách các địa chỉ dừng nhận ở thanh điều hướng bên trái và nhấn nút để phân tích.")
 
 # ------------------------------------------
-# TAB 3: QUẢN LÝ VẬN ĐƠN BƯU KIỆN
+# TAB 3: QUẢN LÝ VẬN ĐƠN BƯU KIỆN (BỔ SUNG TÍNH NĂNG CẬP NHẬT)
 # ------------------------------------------
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
-    st.dataframe(pd.DataFrame(MOCK_ORDERS), use_container_width=True)
+    st.caption("💡 Mẹo: Bạn có thể nhấn đúp trực tiếp vào ô Trạng Thái trong bảng dưới đây để cập nhật nhanh!")
+
+    # Công cụ cập nhật trạng thái nhanh bằng Form phía trên bảng
+    with st.expander("🛠️ BẢNG ĐIỀU KHIỂN CẬP NHẬT TRẠNG THÁI NHANH", expanded=True):
+        c1, c2, c3 = st.columns([1.5, 1.5, 1])
+        with c1:
+            target_id = st.selectbox("Chọn Mã Vận Đơn cần xử lý:", st.session_state.orders_df["Mã Vận Đơn"])
+        with c2:
+            new_status = st.selectbox("Trạng thái cập nhật mới:", ["Chờ phân loại", "Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"])
+        with c3:
+            st.write("<br>", unsafe_allow_html=True)
+            if st.button("XÁC NHẬN CẬP NHẬT"):
+                st.session_state.orders_df.loc[st.session_state.orders_df["Mã Vận Đơn"] == target_id, "Trạng Thái"] = new_status
+                st.success(f"Đã cập nhật đơn hàng {target_id} thành '{new_status}'!")
+                st.rerun()
+
+    # Hiển thị bảng tương tác thông minh cho phép sửa đổi dữ liệu trực tiếp bằng st.data_editor
+    updated_df = st.data_editor(
+        st.session_state.orders_df,
+        use_container_width=True,
+        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], # Khóa các cột thông tin cố định
+        column_config={
+            "Trạng Thái": st.column_config.SelectboxColumn(
+                "Trạng Thái",
+                help="Chọn trạng thái thực tế của đơn hàng",
+                options=["Chờ phân loại", "Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"],
+                required=True,
+            )
+        }
+    )
+    
+    # Lưu lại nếu người dùng chỉnh sửa trực tiếp trên ô của bảng
+    if not updated_df.equals(st.session_state.orders_df):
+        st.session_state.orders_df = updated_df
+        st.toast("Hệ thống đã tự động ghi nhận trạng thái mới từ bảng!", icon="💾")
