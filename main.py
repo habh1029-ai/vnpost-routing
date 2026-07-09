@@ -104,9 +104,13 @@ def calculate_bearing(lat1, lon1, lat2, lon2):
 def generate_turn_by_turn(geometry_coords):
     if len(geometry_coords) < 3:
         return ["🟢 Xuất phát: Di chuyển thẳng theo lộ trình."]
+    
     instructions = ["🟢 **Xuất phát:** Khởi hành từ bưu cục, bám sát lòng đường hành trình."]
     sample_rate = max(1, len(geometry_coords) // 6)
+    
     for i in range(sample_rate, len(geometry_coords) - sample_rate, sample_rate):
-        p1, p2, p3 = geometry_coords[i - sample_rate], geometry_coords[i], geometry_coords[i + sample_rate]
-        turn = (calculate_bearing(p2[0], p2[1], p3[0], p3[1]) - calculate_bearing(p1[0], p1[1], p2[0], p2[1]) + 360) % 360
-        if 25 <=
+        p1 = geometry_coords[i - sample_rate]
+        p2 = geometry_coords[i]
+        p3 = geometry_coords[i + sample_rate]
+        
+        bearing1 = calculate_bearing(p1[0], p1[1], p2
