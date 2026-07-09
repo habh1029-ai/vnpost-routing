@@ -7,7 +7,7 @@ from streamlit_folium import folium_static
 
 # 1. CẤU HÌNH GIAO DIỆN WEB TOÀN MÀN HÌNH
 st.set_page_config(
-    page_title="Hệ thống Điều hành Bưu chính Vietnam Post - Tuyến đa điểm", 
+    page_title="He thong Dieu hanh Buu chinh Vietnam Post - Tuyen da diem", 
     layout="wide"
 )
 
@@ -62,40 +62,40 @@ st.markdown("""
 
 # CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM
 VNPOST_HUBS = {
-    "Bưu cục Tân Định (Q1)": "230 Hai Ba Trung, Quan 1",
-    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Cong xa Paris, Quan 1",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Ba Trung, Quan 1",
-    "Bưu cục Trần Hưng Đạo (Q1)": "447B Tran Hung Dao, Quan 1",
-    "Bưu cục Quận 3": "2Bis Ba Huyen Thanh Quan, Quan 3",
-    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thang, Quan 3",
-    "Bưu cục Vườn Xoài (Q3)": "472 Le Van Sy, Quan 3",
-    "Bưu cục Quận 4": "104 Nguyen Tat Thanh, Quan 4",
-    "Bưu cục Khánh Hội (Q4)": "52 Le Quoc Hung, Quan 4",
-    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyen Trai, Quan 5",
-    "Bưu cục Quận 5": "26 Nguyen Thi, Quan 5",
-    "Bưu cục Quận 6": "88 Thap Muoi, Quan 6",
-    "Bưu cục Tân Phong (Q7)": "565 Nguyen Thi Thap, Quan 7",
-    "Bưu cục Quận 7": "1441 Huynh Tan Phat, Quan 7"
+    "Buu cuc Tan Dinh (Q1)": "230 Hai Ba Trung, Quan 1",
+    "Buu cuc Giao dich Sai Gon (Q1)": "2 Cong xa Paris, Quan 1",
+    "Buu cuc Giao Dich Quoc Te Sai Gon": "117 Hai Ba Trung, Quan 1",
+    "Buu cuc Tran Hung Dao (Q1)": "447B Tran Hung Dao, Quan 1",
+    "Buu cuc Quan 3": "2Bis Ba Huyen Thanh Quan, Quan 3",
+    "Buu cuc Ban Co (Q3)": "49A Cao Thang, Quan 3",
+    "Buu cuc Vuon Xoai (Q3)": "472 Le Van Sy, Quan 3",
+    "Buu cuc Quan 4": "104 Nguyen Tat Thanh, Quan 4",
+    "Buu cuc Khanh Hoi (Q4)": "52 Le Quoc Hung, Quan 4",
+    "Buu cuc Nguyen Trai (Q5)": "49 Nguyen Trai, Quan 5",
+    "Buu cuc Quan 5": "26 Nguyen Thi, Quan 5",
+    "Buu cuc Quan 6": "88 Thap Muoi, Quan 6",
+    "Buu cuc Tan Phong (Q7)": "565 Nguyen Thi Thap, Quan 7",
+    "Buu cuc Quan 7": "1441 Huynh Tan Phat, Quan 7"
 }
 
 # KHỞI TẠO DỮ LIỆU MOCK DATA BAN ĐẦU
 DISTRICT_DATA = {
-    "Thành công (Đã ký POD)": [420, 380, 290, 180, 150],
-    "Đang phát/Hoãn lại": [15, 22, 12, 8, 19]
+    "Thanh cong (Da ky POD)": [420, 380, 290, 180, 150],
+    "Dang phat/Hoan lai": [15, 22, 12, 8, 19]
 }
-DISTRICT_INDEX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
+DISTRICT_INDEX = ["Quan 1", "Quan 3", "Quan 5", "Quan 7", "Quan 4"]
 
 WEIGHT_DATA = {
-    "Đội xe máy chặng cuối": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5],
-    "Đội xe tải bưu chính": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]
+    "Doi xe may chang cuoi": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5],
+    "Doi xe tai buu chinh": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]
 }
-WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+WEIGHT_INDEX = ["Thu 2", "Thu 3", "Thu 4", "Thu 5", "Thu 6", "Thu 7", "Chu Nhat"]
 
 MOCK_ORDERS = {
-    "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
-    "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D"],
-    "Địa Chỉ": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "Vòng xoay Dân Chủ"],
-    "Loại Hàng": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Hàng dễ vỡ"]
+    "Ma Van Don": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
+    "Nguoi Nhan": ["Nguyen Van A", "Tran Thi B", "Le Hoang C", "Pham Minh D"],
+    "Dia Chi": ["100 Cao Thang, Q3", "320 Nguyen Du, Q1", "Ho Con Rua, Q3", "Vong xoay Dan Chu"],
+    "Loai Hang": ["Tai lieu mat", "Linh kien dien tu", "Buu kien lon", "Hang de vo"]
 }
 
 def get_coordinates_from_address(address_text):
@@ -116,4 +116,27 @@ def get_coordinates_from_address(address_text):
 
 # 3. SIDEBAR CẤU HÌNH TUYẾN ĐƯỜNG ĐA ĐIỂM
 with st.sidebar:
-    st.markdown("### 🛠
+    st.write("### Cau hinh Lo trinh Da Diem")
+    selected_start_hub = st.selectbox("Chon nhanh buu cuc xuat phat:", list(VNPOST_HUBS.keys()))
+    start_input = st.text_area("Tu buu cuc (Diem xuat phat):", value=VNPOST_HUBS[selected_start_hub], height=70)
+    
+    st.write("---")
+    st.write("Danh sach cac diem giao hang (Multi-drop):")
+    st.caption("Nhap danh sach dia chi, moi dia chi viet tren 1 dong theo thu tu giao uu tien:")
+    
+    default_stops = "100 Cao Thang, Quan 3\n320 Nguyen Du, Quan 1\nHo Con Rua, Quan 3"
+    stops_input = st.text_area("Cac diem giao hang chang cuoi:", value=default_stops, height=130)
+    
+    st.write("---")
+    st.write("Phuong tien van chuyen:")
+    vehicle_type = st.radio(
+        "Lua chon phuong tien:",
+        ["Xe may buu ta chang cuoi", "Xe tai buu chinh lon"],
+        label_visibility="collapsed"
+    )
+    
+    activated = st.button("TINH TOAN LO TRINH THUC DIA")
+
+# TIÊU ĐỀ CHÍNH TRANG WEB
+st.markdown("""<p class="main-title">HE THONG DIEU HANH BUU CHINH THONG MINH VIETNAM POST</p>""", unsafe_allow_html=True)
+st.write("*Truc quan hoa mang luoi Logistics, Dinh tuy
