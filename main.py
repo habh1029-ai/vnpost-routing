@@ -113,20 +113,23 @@ with tab_map:
                     
                     folium.PolyLine([[c[1], c[0]] for c in trip['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.85).add_to(m)
                     
-                    waypoints_sorted = sorted(waypoints, key=lambda x: x['trips_index'])
+                    # Giải thuật sửa lỗi: Sắp xếp các điểm dừng dựa theo thuộc tính thứ tự hành trình thực tế trong chuỗi cung ứng
+                    waypoints_sorted = sorted(waypoints, key=lambda x: x['waypoint_index'])
                     optimized_names = []
                     
+                    # Gán chỉ số chặng tăng dần thực tế bắt đầu từ 1
+                    current_stop_number = 1
                     for w in waypoints_sorted:
                         w_idx = w['waypoint_index']
-                        visit_order = w['trips_index']
                         curr_coords = [w['location'][1], w['location'][0]]
                         
                         if w_idx == 0:
                             folium.Marker(curr_coords, tooltip="ĐIỂM XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
-                            optimized_names.append(f"Khởi hành: {addr_mapping[w_idx]}")
+                            optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
                         else:
-                            folium.Marker(curr_coords, tooltip=f"Chặng {visit_order}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
-                            optimized_names.append(f"Chặng {visit_order} ➔ Giao đến: {addr_mapping[w_idx]}")
+                            folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                            optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
+                            current_stop_number += 1
 
                     fuel = 2.5 if "máy" in vehicle_type else 9.0
                     with col_right:
