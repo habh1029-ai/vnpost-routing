@@ -43,7 +43,6 @@ DISTRICT_INDEX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 WEIGHT_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
-# Khởi tạo dữ liệu gốc trong session_state nếu chưa tồn tại
 if "orders_data" not in st.session_state:
     st.session_state.orders_data = pd.DataFrame({
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
@@ -100,9 +99,4 @@ with tab_map:
                 addr_mapping = {0: f"Xuất phát từ {selected_start_hub}"}
                 
                 for idx, stop_addr in enumerate(raw_stops, 1):
-                    loc = get_coordinates_from_address(stop_addr)
-                    base_coords.append([loc['lon'], loc['lat']])
-                    addr_mapping[idx] = f"{stop_addr}"
-                
-                coord_string = ";".join([f"{c[0]},{c[1]}" for c in base_coords])
-                url = f"
+                    loc = get_coordinates_from_
