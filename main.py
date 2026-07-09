@@ -4,66 +4,144 @@ import math
 import requests
 import pandas as pd
 
-# 1. CẤU HÌNH GIAO DIỆN WEB TOÀN MÀN HÌNH
-st.set_page_config(page_title="Hệ thống Điều hành Bưu chính Vietnam Post", layout="wide")
+# 1. CẤU HÌNH GIAO DIỆN WEB TOÀN MÀN HÌNH & GIAO DIỆN HIỆN ĐẠI
+st.set_page_config(
+    page_title="Hệ thống Điều hành Bưu chính Vietnam Post", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 2. CHÈN CSS CUSTOM ĐỂ TRANG TRÍ WEB SINH ĐỘNG (NHẬN DIỆN VNPOST)
+st.markdown("""
+    <style>
+        /* Đổi màu nền thanh sidebar bên trái */
+        [data-testid="stSidebar"] {
+            background-color: #fcf8f2;
+            border-right: 2px solid #F2A900;
+        }
+        
+        /* Định dạng lại tiêu đề chính sinh động hơn */
+        .main-title {
+            font-size: 2.3rem !important;
+            font-weight: 800;
+            color: #0056b3;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            border-bottom: 4px solid #F2A900;
+            padding-bottom: 10px;
+        }
+        
+        /* Tạo khối Card chỉ số lấp lánh, bo góc nghệ thuật */
+        .metric-card {
+            background: linear-gradient(145deg, #ffffff, #f1f5f9);
+            border-left: 5px solid #F2A900;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(242, 169, 0, 0.15);
+        }
+        
+        /* Làm đẹp cho các Tab điều hướng */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 10px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #f1f5f9;
+            border-radius: 8px 8px 0px 0px;
+            padding: 10px 20px;
+            font-weight: bold;
+            color: #475569;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #0056b3 !important;
+            color: white !important;
+            border-bottom: 3px solid #F2A900 !important;
+        }
+        
+        /* Tùy chỉnh nút bấm chính */
+        div.stButton > button:first-child {
+            background: linear-gradient(135deg, #F2A900, #ffc745);
+            color: #003366 !important;
+            font-weight: bold !important;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            box-shadow: 0 4px 10px rgba(242,169,0,0.3);
+            width: 100%;
+            transition: all 0.3s;
+        }
+        div.stButton > button:first-child:hover {
+            background: linear-gradient(135deg, #0056b3, #0076f7);
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(0,86,179,0.3);
+        }
+    </style>
+""", unsafe_unsafe_allow_html=True)
+
 
 def get_advanced_libraries():
     from streamlit_folium import folium_static
     from folium.plugins import Fullscreen
     return folium_static, Fullscreen
 
-# TIÊU ĐỀ ĐIỀU HÀNH CHÍNH THEO NHẬN DIỆN THƯƠNG HIỆU VNPOST
-st.title("✉️ TỐI ƯU HÓA TUYẾN ĐƯỜNG TRONG HOẠT ĐỘNG BƯU CHÍNH CỦA VIETNAM POST")
-st.subheader("Hệ thống quản lý, điều phối trạng thái và định tuyến thực địa thông minh")
+# BANNER TIÊU ĐỀ TRÊN CÙNG
+st.markdown('<p class="main-title">✉️ HỆ THỐNG ĐIỀU HÀNH BƯU CHÍNH THÔNG MINH VIETNAM POST</p>', unsafe_allow_html=True)
+st.markdown("<p style='color:#64748b; font-style:italic;'>Trực quan hóa mạng lưới Logistics, Định tuyến chặng cuối & Giám sát trạng thái thời gian thực</p>", unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN (ĐÃ TỐI ƯU ĐỊA CHỈ GỌN)
 VNPOST_HUBS = {
-    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Phường Bến Nghé, Quận 1",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117-119 Hai Bà Trưng, Phường Bến Nghé, Quận 1",
-    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Phường Tân Định, Quận 1",
-    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Phường Cầu Kho, Quận 1",
-    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Phường 6, Quận 3",
-    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Phường 3, Quận 3",
-    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Phường 14, Quận 3",
-    "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Phường 13, Quận 4",
-    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Phường 12, Quận 4",
-    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Phường 2, Quận 5",
-    "Bưu cục Quận 5": "26 Nguyễn Thi, Phường 13, Quận 5",
-    "Bưu cục Quận 6": "88-90 Tháp Mười, Phường 2, Quận 6",
-    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Phường Tân Phong, Quận 7",
-    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Phường Phú Mỹ, Quận 7",
-    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển Phường 4, Quận 8",
-    "Bưu cục Quận 8": "428 Tùng Thiện Vương, Phường 13, Quận 8",
-    "Bưu cục Quận 10": "157 Lý Thái Tổ, Phường 9, Quận 10",
-    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám, Phường 13, Quận 10",
-    "Bưu cục Phú Thọ (Q10)": "270Bis Lý Thường Kiệt, Phường 14, Quận 10",
-    "Bưu cục Quận 11": "244 Minh Phụng, Phường 16, Quận 11",
-    "Bưu cục Quang Trung (Q12)": "Đường Tô Ký, Phường Đông Hưng Thuận, Quận 12",
-    "Bưu cục Tân Thới Nhất (Q12)": "44/6 Phan Văn Hớn, Phường Tân Thới Nhất, Quận 12",
-    "Bưu cục An Khánh (Q2 cũ)": "D7/2A Trần Não, Phường Bình Khánh, Quận 2",
-    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh, Phường Bình Trưng Tây, Quận 2",
-    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện, Phường Hiệp Phú, Quận 9",
-    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2, Phường Phước Bình, Quận 9",
-    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa, Phường Tam Bình, Thủ Đức",
-    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4, Phường Linh Trung, Thủ Đức",
-    "Bưu cục Thủ Đức": "128A Kha Vạn Cân, Phường Trường Thọ, Thủ Đức",
-    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh, Phường 17, Bình Thạnh",
-    "Bưu cục Bình Thạnh": "03 Phan Đăng Lưu, Phường 3, Bình Thạnh",
-    "Bưu cục Phú Nhuận": "241 Phan Đình Phùng, Phường 15, Phú Nhuận",
-    "Bưu cục Gò Vấp": "555 Lê Quang Định, Phường 1, Gò Vấp",
-    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm, Phường 9, Gò Vấp",
-    "Bưu cục Tân Sơn Nhất (Tân Bình)": "2B/2 Bạch Đằng, Phường 2, Tân Bình",
-    "Bưu cục Tân Bình": "288A Hoàng Văn Thụ, Phường 4, Tân Bình",
-    "Bưu cục Chí Hòa (Tân Bình)": "695-697 Cách Mạng Tháng Tám, Phường 6, Tân Bình",
-    "Bưu cục Gò Dầu (Tân Phú)": "Chung cư Gò Dầu 2, Phường Tân Sơn Nhì, Tân Phú",
-    "Bưu cục Tân Phú": "90 Lô B Nguyễn Sơn, Phường Phú Thọ Hòa, Tân Phú",
-    "Bưu cục Bình Hưng Hòa (Bình Tân)": "1026 Tân Kỳ Tân Quý, Phường Bình Hưng Hòa, Bình Tân",
-    "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57/7 Lý Nam Đế, Thị trấn Hóc Môn, Hóc Môn",
-    "Bưu cục Tân Phú Trung (Củ Chi)": "912 Quốc Lộ 22, Xã Tân Phú Trung, Củ Chi",
-    "Bưu cục Bình Chánh": "E9/37 Nguyễn Hữu Trí, Thị trấn Tân Túc, Bình Chánh"
+    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Quận 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng, Quận 1",
+    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Quận 1",
+    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Quận 1",
+    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Quận 3",
+    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Quận 3",
+    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Quận 3",
+    "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Quận 4",
+    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Quận 4",
+    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Quận 5",
+    "Bưu cục Quận 5": "26 Nguyễn Thi, Quận 5",
+    "Bưu cục Quận 6": "88 Tháp Mười, Quận 6",
+    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Quận 7",
+    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Quận 7",
+    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển, Quận 8",
+    "Bưu cục Quận 8": "428 Tùng Thiện Vương, Quận 8",
+    "Bưu cục Quận 10": "157 Lý Thái Tổ, Quận 10",
+    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám, Quận 10",
+    "Bưu cục Phú Thọ (Q10)": "270 Lý Thường Kiệt, Quận 10",
+    "Bưu cục Quận 11": "244 Minh Phụng, Quận 11",
+    "Bưu cục Quang Trung (Q12)": "Tô Ký, Đông Hưng Thuận, Quận 12",
+    "Bưu cục Tân Thới Nhất (Q12)": "44 Phan Văn Hớn, Quận 12",
+    "Bưu cục An Khánh (Q2 cũ)": "D7 Trần Não, Quận 2",
+    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh, Quận 2",
+    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện, Quận 9",
+    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2, Quận 9",
+    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa, Thủ Đức",
+    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4, Thủ Đức",
+    "Bưu cục Thủ Đức": "128A Kha Vạn Cân, Thủ Đức",
+    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh, Bình Thạnh",
+    "Bưu cục Bình Thạnh": "3 Phan Đăng Lưu, Bình Thạnh",
+    "Bưu cục Phú Nhuận": "241 Phan Đình Phùng, Phú Nhuận",
+    "Bưu cục Gò Vấp": "555 Lê Quang Định, Gò Vấp",
+    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm, Gò Vấp",
+    "Bưu cục Tân Sơn Nhất (TBT)": "2B Bạch Đằng, Tân Bình",
+    "Bưu cục Tân Bình": "288 Hoàng Văn Thụ, Tân Bình",
+    "Bưu cục Chí Hòa (TBT)": "695 Cách Mạng Tháng Tám, Tân Bình",
+    "Bưu cục Gò Dầu (TPhú)": "Chung cư Gò Dầu 2, Tân Phú",
+    "Bưu cục Tân Phú": "90 Nguyễn Sơn, Tân Phú",
+    "Bưu cục Bình Hưng Hòa (BTân)": "1026 Tân Kỳ Tân Quý, Bình Tân",
+    "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57 Lý Nam Đế, Hóc Môn",
+    "Bưu cục Tân Phú Trung (CC)": "912 Quốc Lộ 22, Củ Chi",
+    "Bưu cục Bình Chánh": "E9 Nguyễn Hữu Trí, Bình Chánh"
 }
 
-# THUẬT TOÁN TỰ ĐỘNG CHUYỂN ĐỔI ĐỊA CHỈ THÀNH TỌA ĐỘ GPS (GEOCODING)
+# ALGORITHM: GEOCODING TO GPS
 def get_coordinates_from_address(address_text):
     try:
         full_query = f"{address_text}, Ho Chi Minh City, Vietnam"
@@ -80,7 +158,7 @@ def get_coordinates_from_address(address_text):
     except Exception:
         return None
 
-# THUẬT TOÁN TÍNH PHƯƠNG HƯỚNG BẺ LÁI CHO BƯU TÁ
+# ALGORITHM: TURN BY TURN NAVIGATION
 def calculate_bearing(lat1, lon1, lat2, lon2):
     lat1_rad, lon1_rad, lat2_rad, lon2_rad = map(math.radians, [lat1, lon1, lat2, lon2])
     d_lon = lon2_rad - lon1_rad
@@ -104,70 +182,87 @@ def generate_turn_by_turn(geometry_coords):
         b2 = calculate_bearing(p2[0], p2[1], p3[0], p3[1])
         turn = (b2 - b1 + 360) % 360
         if 25 <= turn < 155:
-            instructions.append("↩️ **Rẽ phải** tại giao lộ phía trước theo phân tuyến hành trình.")
+            instructions.append("↩️ **Rẽ phải** tại giao lộ phía trước theo hành trình.")
         elif 205 <= turn < 335:
-            instructions.append("↪️ **Rẽ trái** ôm theo bùng binh hoặc ngã rẽ vào làn gom bưu chính.")
+            instructions.append("↪️ **Rẽ trái** vào tuyến đường phân phối chặng cuối.")
     instructions.append("🔴 **Đến nơi:** Địa điểm bàn giao hàng nằm ngay trước hướng di chuyển.")
     return instructions[:6]
 
 
 # ==========================================
-# THIẾT KẾ THANH TASKBAR ĐIỀU HƯỚNG (MỤC TABS)
+# GIAO DIỆN THANH TABS HIỆN ĐẠI
 # ==========================================
 tab_enterprise, tab_routing, tab_status = st.tabs([
-    "🏢 Doanh nghiệp Vietnam Post", 
-    "🗺️ Tối ưu tuyến đường chỉ dẫn", 
-    "📦 Xác nhận trạng thái đơn"
+    "🏢 Trung tâm Giám sát", 
+    "🗺️ Tối ưu Tuyến đường", 
+    "📦 Quản lý Vận đơn"
 ])
 
 # ------------------------------------------
-# MỤC 1: DOANH NGHIỆP VIETNAM POST (TỔNG QUAN & ĐIỀU HÀNH)
+# MỤC 1: TRUNG TÂM GIÁM SÁT DOANH NGHIỆP
 # ------------------------------------------
 with tab_enterprise:
-    st.header("Tổng công ty Bưu điện Việt Nam - Vietnam Post")
+    st.markdown("### 📊 Tổng quan Hoạt động Mạng lưới Bưu chính")
     
-    hub_selected = st.selectbox("Lựa chọn bưu cục quản lý hệ thống:", list(VNPOST_HUBS.keys()))
-    st.info(f"💡 **Vị trí địa lý:** {VNPOST_HUBS[hub_selected]}")
+    col_sel1, col_sel2 = st.columns([1, 1])
+    with col_sel1:
+        hub_selected = st.selectbox("Lựa chọn bưu cục quản lý hệ thống dữ liệu:", list(VNPOST_HUBS.keys()))
+    with col_sel2:
+        st.markdown(f"<div style='margin-top:32px; background-color:#e0f2fe; padding:10px; border-radius:8px; border-left:4px solid #0284c7; color:#0369a1;'>📍 <b>Địa chỉ phục vụ:</b> {VNPOST_HUBS[hub_selected]}</div>", unsafe_allow_html=True)
     
-    col_info1, col_info2 = st.columns(2)
+    st.markdown("---")
+    
+    col_info1, col_info2 = st.columns([1, 1])
     with col_info1:
-        st.markdown("### 📊 Tiến độ khai thác sản lượng trong ngày")
-        st.write("Tỷ lệ bưu phẩm đã phát thành công chặng cuối:")
+        st.markdown("#### ⚡ Hiệu suất khai thác trong ngày")
+        st.write("Tỷ lệ bưu phẩm hoàn thành chặng cuối:")
         st.progress(0.85)
         
-        st.markdown("---")
+        # Áp dụng CSS Card vừa thiết kế để trang trí chỉ số sinh động hơn
         col_m1, col_m2 = st.columns(2)
-        col_m1.metric(label="Đơn hàng phát thành công", value="1,420 kiện", delta="+12%")
-        col_m2.metric(label="Bưu tá thực địa chặng cuối", value="45 nhân sự", delta="Sẵn sàng")
+        with col_m1:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">ĐÃ GIAO THÀNH CÔNG</p>
+                    <h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">1,420 kiện</h2>
+                    <p style="margin:0; font-size:0.85rem; color:#16a34a;">↗️ +12% so với hôm qua</p>
+                </div>
+            """, unsafe_allow_html=True)
+        with col_m2:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <p style="margin:0; font-size:0.9rem; color:#64748b; font-weight:bold;">BƯU TÁ THỰC ĐỊA</p>
+                    <h2 style="margin:5px 0 0 0; color:#0056b3; font-weight:800;">45 Nhân sự</h2>
+                    <p style="margin:0; font-size:0.85rem; color:#0284c7;">🔵 Trạng thái: Sẵn sàng</p>
+                </div>
+            """, unsafe_allow_html=True)
         
     with col_info2:
         with st.container(border=True):
-            st.write("🎯 **Quản lý Tải trọng & Khuyến cáo phân loại bưu phẩm**")
-            st.warning("⚠️ Hệ thống phát hiện có **24 bưu phẩm cồng kềnh/dễ vỡ** có kích thước vượt giỏ hàng xe máy thông thường.")
-            st.write("- 🛵 **Xe máy bưu tá:** Phù hợp với bưu phẩm thư từ, tài liệu hoặc gói hàng < 5kg.")
-            st.write("- 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bổ 2 xe hỗ trợ đi gom gom các tuyến đường trục lớn để tránh hư hỏng hàng hóa.")
+            st.markdown("🎯 **Quản lý Tải trọng & Khuyến cáo Phân tuyến**")
+            st.warning("⚠️ Hệ thống phát hiện có **24 bưu phẩm cồng kềnh** có kích thước vượt giỏ hàng xe máy thông thường.")
+            st.markdown("""
+            * 🛵 **Xe máy bưu tá:** Phù hợp bưu phẩm thư từ, tài liệu gọn (< 5kg).
+            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bổ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
+            """)
 
 # ------------------------------------------
-# MỤC 2: TỐI ƯU TUYẾN ĐƯỜNG CHỈ DẪN (ĐỊNH TUYẾN THÔNG MINH)
+# MỤC 2: TỐI ƯU TUYẾN ĐƯỜNG (MAP & CHỈ ĐƯỜNG)
 # ------------------------------------------
 with tab_routing:
-    st.header("Hệ thống tối ưu đường đi thực địa bưu chính")
+    st.markdown("### 🗺️ Bản đồ Định tuyến & Tối ưu lộ trình bưu tá")
     
-    st.sidebar.header("🛠️ Cấu hình lộ trình chặng phát")
+    st.sidebar.markdown("<h3 style='color:#0056b3;'>🛠️ Cấu hình lộ trình</h3>", unsafe_allow_html=True)
     
-    # Cho phép chọn nhanh bưu cục xuất phát từ danh sách chuẩn dữ liệu vừa cung cấp
     selected_start_hub = st.sidebar.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     start_address = VNPOST_HUBS[selected_start_hub]
     
-    st.sidebar.text("📍 Địa chỉ bưu cục tự động điền:")
-    start_input = st.sidebar.text_area("Từ bưu cục:", value=start_address, height=70)
-    
-    end_input = st.sidebar.text_input("Địa chỉ phát hàng của khách (Ví dụ: 100 Cao Thắng):", "100 Cao Thắng")
-    
-    vehicle_type = st.sidebar.radio("Lựa chọn phương tiện vận chuyển:", ["🛵 Xe máy bưu tá chặng cuối", "🚚 Xe tải bưu chính lớn"])
+    start_input = st.sidebar.text_area("Từ địa chỉ bưu cục:", value=start_address, height=70)
+    end_input = st.sidebar.text_input("Địa chỉ giao hàng khách nhận:", "100 Cao Thắng")
+    vehicle_type = st.sidebar.radio("Phương tiện vận chuyển:", ["🛵 Xe máy bưu tá chặng cuối", "🚚 Xe tải bưu chính lớn"])
     
     st.sidebar.markdown("---")
-    activated = st.sidebar.button("🚀 Tính toán lộ trình thực địa")
+    activated = st.sidebar.button("🚀 TÍNH TOÁN LỘ TRÌNH THỰC ĐỊA")
 
     col_left, col_right = st.columns([2, 1])
 
@@ -177,18 +272,18 @@ with tab_routing:
 
     if activated:
         if not start_input.strip() or not end_input.strip():
-            st.sidebar.warning("⚠️ Vui lòng điền đủ thông tin địa chỉ gửi và nhận!")
+            st.sidebar.warning("⚠️ Vui lòng không để trống địa chỉ!")
         elif start_input.strip().lower() == end_input.strip().lower():
-            st.sidebar.warning("⚠️ Vị trí xuất phát và đích đến không được trùng nhau!")
+            st.sidebar.warning("⚠️ Điểm xuất phát và đích đến trùng nhau!")
         else:
             try:
-                with st.spinner("🔍 Đang kết nối OSRM tính toán định tuyến bám đường phố..."):
+                with st.spinner("🔍 Đang kết nối OSRM định vị..."):
                     folium_static, Fullscreen = get_advanced_libraries()
                     loc1 = get_coordinates_from_address(start_input)
                     loc2 = get_coordinates_from_address(end_input)
                     
                     if not loc1:
-                        st.error(f"❌ Không tìm thấy vị trí bưu cục: '{start_input}'")
+                        st.error(f"❌ Bản đồ chưa nhận diện được bưu cục: '{start_input}'. Hãy dùng Cách 1 xóa bớt chữ.")
                     elif not loc2:
                         st.error(f"❌ Không tìm thấy vị trí khách hàng: '{end_input}'")
                     else:
@@ -203,8 +298,8 @@ with tab_routing:
                             
                             total_distance = route_data['distance']
                             duration = route_data['duration']
-                            
                             distance_km = total_distance / 1000
+                            
                             if "🛵" in vehicle_type:
                                 fuel_consumption = (distance_km / 100) * 2.5 * 23000
                             else:
@@ -218,57 +313,45 @@ with tab_routing:
                             Fullscreen(position="topleft", title="Mở rộng").add_to(m)
                             folium.TileLayer('openstreetmap').add_to(m)
                             
-                            folium.Marker([loc1['lat'], loc1['lon']], tooltip=f"Xuất phát: {loc1['display_name']}", icon=folium.Icon(color='green', icon='play')).add_to(m)
-                            folium.Marker([loc2['lat'], loc2['lon']], tooltip=f"Điểm phát: {loc2['display_name']}", icon=folium.Icon(color='red', icon='flag')).add_to(m)
+                            folium.Marker([loc1['lat'], loc1['lon']], tooltip=f"Bưu cục: {loc1['display_name']}", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                            folium.Marker([loc2['lat'], loc2['lon']], tooltip=f"Khách hàng: {loc2['display_name']}", icon=folium.Icon(color='red', icon='flag')).add_to(m)
                             folium.PolyLine(detailed_route_gps, color="#0056b3", weight=6, opacity=0.85).add_to(m)
                             
-                            st.success("✅ Tuyến đường bưu chính đã được tối ưu hóa thành công!")
-                            
                             with col_left:
-                                st.write(f"🗺️ **Tuyến đường bưu chính bám sát lòng đường:**")
+                                st.markdown("<div style='background-color:#dcfce7; padding:10px; border-radius:8px; color:#15803d; font-weight:bold; margin-bottom:10px;'>✅ ĐÃ TỐI ƯU TUYẾN ĐƯỜNG BÁM LÒNG ĐƯỜNG</div>", unsafe_allow_html=True)
                                 folium_static(m, width=800, height=520)
                                 
-                                gps_text = f"Lộ trình hành trình: {selected_start_hub} -> {end_input} | Tổng khoảng cách: {distance_km:.2f} km."
-                                st.text_input("Chuỗi dữ liệu định vị (Dùng để đồng bộ):", value=gps_text)
-                                
                             with col_right:
-                                st.write("📱 **Màn hình điều hướng bưu tá:**")
+                                st.markdown("#### 📱 Thiết bị bưu tá")
                                 with st.container(border=True):
-                                    st.metric(label="Tổng chiều dài chặng phát", value=f"{total_distance:.0f} mét")
-                                    st.metric(label="Thời gian di chuyển dự kiến", value=f"{duration/60:.1f} phút")
-                                    st.metric(label="Ước tính phụ cấp nhiên liệu chặng", value=f"{fuel_consumption:.0f} VNĐ")
+                                    st.markdown(f"🛣️ **Khoảng cách:** `{distance_km:.2f} km`")
+                                    st.markdown(f"⏱️ **Thời gian di chuyển:** `{duration/60:.1f} phút`")
+                                    st.markdown(f"💰 **Trợ cấp xăng xe:** `{fuel_consumption:.0f} VNĐ`")
                                     st.markdown("---")
-                                    st.write("🧭 **Chỉ dẫn lộ trình chi tiết:**")
+                                    st.write("🧭 **Chỉ dẫn thực địa:**")
                                     for inst in nav_instructions:
                                         st.write(inst)
                         else:
-                            st.error("❌ Máy chủ định tuyến không tìm thấy tuyến đường khả thi.")
+                            st.error("❌ Máy chủ định tuyến lỗi dữ liệu tuyến đường.")
             except Exception as e:
-                st.error(f"❌ Lỗi xử lý dữ liệu: {e}")
+                st.error(f"❌ Lỗi: {e}")
     else:
         with col_left:
-            st.write("🗺️ **Bản đồ tương tác thực địa mạng lưới bưu chính:**")
-            try:
-                from streamlit_folium import folium_static
-                folium_static(m, width=800, height=520)
-            except Exception:
-                st.warning("Đang khởi tạo bản đồ hệ thống...")
+            folium_static(m, width=800, height=520)
         with col_right:
-            st.write("📱 **Màn hình điều hướng bưu tá:**")
-            st.info("Nhập địa chỉ ở cột bên trái và bấm nút 'Tính toán lộ trình thực địa'.")
+            st.info("💡 Điền thông tin hành trình và click 'Tính toán lộ trình thực địa' ở thanh bên trái để xem kết quả trực quan.")
 
 # ------------------------------------------
-# MỤC 3: XÁC NHẬN TRẠNG THÁI ĐƠN HÀNG (QUẢN LÝ CHẶNG CUỐI)
+# MỤC 3: QUẢN LÝ TRẠNG THÁI VẬN ĐƠN POD
 # ------------------------------------------
 with tab_status:
-    st.header("Trung tâm Quản lý & Đối soát Vận đơn Chặng cuối")
+    st.markdown("### 📦 Quản lý Trạng thái Vận đơn Chặng cuối")
     
-    st.write("📋 **Danh sách các vận đơn bưu chính được phân bổ cho bạn hôm nay:**")
     mock_orders = {
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
         "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D"],
         "Địa Chỉ": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "Vòng xoay Dân Chủ"],
-        "Loại Hàng": ["Tài liệu mật", "Hàng linh kiện điện tử", "Bưu kiện cồng kềnh", "Hàng dễ vỡ"]
+        "Loại Hàng": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Hàng dễ vỡ"]
     }
     df_orders = pd.DataFrame(mock_orders)
     st.dataframe(df_orders, use_container_width=True)
@@ -277,50 +360,35 @@ with tab_status:
     
     col_status1, col_status2 = st.columns([1, 1])
     with col_status1:
-        st.write("🆔 **Cập nhật nhanh tiến độ đơn phát**")
-        selected_order = st.selectbox("Chọn mã vận đơn cần xử lý từ danh sách trên:", df_orders["Mã Vận Đơn"])
+        st.markdown("#### 🆔 Cập nhật tiến độ giao hàng")
+        selected_order = st.selectbox("Chọn mã vận đơn cần cập nhật:", df_orders["Mã Vận Đơn"])
         
         status_options = [
             "🛵 Bưu tá đang đi phát hàng chặng cuối",
-            "✅ Phát thành công (Đã ký nhận)",
-            "❌ Giao hàng thất bại / Khách hẹn lại ngày phát",
-            "🚨 Báo cáo sự cố khẩn cấp trên tuyến đường (SOS)"
+            "✅ Phát thành công (Đã ký nhận POD)",
+            "❌ Giao hàng thất bại / Khách hẹn lại",
+            "🚨 Báo cáo sự cố khẩn cấp trên đường (SOS)"
         ]
-        current_status = st.selectbox("Cập nhật trạng thái mới cho bưu phẩm:", status_options, index=0)
+        current_status = st.selectbox("Trạng thái mới:", status_options, index=0)
         
         if "Thất bại" in current_status:
-            fail_reason = st.selectbox("Lý do giao hàng thất bại cụ thể:", [
-                "Khách hàng tắt máy, không liên lạc được (Quá 3 lần gọi)",
-                "Khách hàng hẹn đổi sang ca chiều / ngày mai",
-                "Sai thông tin số nhà, địa chỉ không tồn tại",
-                "Khách hàng từ chối nhận bưu phẩm do đổi ý"
-            ])
-            
+            st.selectbox("Lý do chi tiết:", ["Khách tắt máy không liên lạc được", "Khách hẹn đổi ca", "Sai thông tin số nhà"])
         elif "Thành công" in current_status:
-            st.success("Tích hợp hồ sơ POD - Vui lòng lưu bằng chứng phát hành bên dưới:")
             st.file_uploader("📸 Tải lên ảnh chụp ký nhận thực tế tại nhà khách (Bằng chứng POD):", type=["jpg", "png", "jpeg"])
-            st.text_input("Họ tên người ký nhận thay (nếu có):")
-            
         elif "SOS" in current_status:
             st.error("🚨 HỆ THỐNG CẢNH BÁO SỰ CỐ KHẨN CẤP")
-            sos_reason = st.text_area("Mô tả chi tiết sự cố thực địa (Ví dụ: Xe hỏng hóc, tai nạn, ngập lụt nghiêm trọng...):", 
-                                      "Bị thủng lốp xe trên đường trục chính, cần đội kỹ thuật bưu cục hỗ trợ ứng ứng.")
-            st.caption("ℹ️ Khi bấm xác nhận SOS, hệ thống sẽ tự động gửi tọa độ của bạn về bưu cục trung tâm và tạm hoãn các đơn hàng còn lại trong ca.")
+            st.text_area("Mô tả sự cố:", "Hỏng lốp xe, cần cứu hộ.")
             
-        note = st.text_area("Ghi chú bổ sung của bưu tá:", "Đang di chuyển tiếp cận.")
-        
-        if st.button("💾 Xác nhận và Đồng bộ lên Tổng đài VNPost"):
-            st.toast(f"Đã đồng bộ dữ liệu vận đơn {selected_order} thành công!", icon="🚀")
-            st.success(f"Dữ liệu trạng thái của mã đơn {selected_order} đã được truyền lên hệ thống quản trị trung tâm.")
+        note = st.text_area("Ghi chú bổ sung:", "Đang di chuyển.")
+        if st.button("💾 ĐỒNG BỘ LÊN TỔNG ĐÀI VNPOST"):
+            st.toast("Đồng bộ thành công!", icon="🚀")
             
     with col_status2:
-        st.write("🕒 **Lịch sử cập nhật hệ thống (Timeline)**")
+        st.markdown("#### 🕒 Nhật ký hành trình (Timeline)")
         with st.container(border=True):
-            st.markdown(f"**Mã vận đơn đang kiểm tra:** `{selected_order}`")
+            st.markdown(f"**Vận đơn:** `{selected_order}`")
+            st.markdown(f"📍 **Trạng thái hiện tại:** `{current_status}`")
             st.markdown("---")
-            st.markdown(f"📍 **Trạng thái ghi nhận gần nhất:** `{current_status}`")
-            st.markdown("---")
-            st.write("📜 **Dòng thời gian chi tiết:**")
-            st.markdown(f"- **[2026-07-09 09:35]** Trạng thái: {current_status} | Ghi chú: *{note}*")
-            st.markdown("- **[2026-07-09 06:15]** Trạng thái: *📥 Đã nhập kho bưu cục chặng cuối* (Địa điểm: Trung tâm khai thác phân loại bưu chính TP.HCM).")
-            st.markdown("- **[2026-07-08 14:20]** Trạng thái: *🚚 Đang vận chuyển liên tỉnh* (Tuyến vận chuyển: Trục bưu chính quốc gia Bắc Nam).")
+            st.markdown(f"- **[2026-07-09 09:35]** {current_status} | *{note}*")
+            st.markdown("- **[2026-07-09 06:15]** 📥 Đã nhập kho bưu cục chặng cuối.")
+            st.markdown("- **[2026-07-08 14:20]** 🚚 Đang vận chuyển trục bưu chính quốc gia.")
