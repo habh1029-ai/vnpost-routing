@@ -65,11 +65,33 @@ WEIGHT_DATA = {
 }
 WEIGHT_INDEX = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
 
+# BỔ SUNG THÊM 10 KIỆN HÀNG MỚI (TỔNG CỘNG 13 VẬN ĐƠN)
 MOCK_ORDERS = {
-    "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"],
-    "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C"],
-    "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3"],
-    "Loại Hàng Hóa": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn"]
+    "Mã Vận Đơn": [
+        "VN94827HCM", "VN10482HCM", "VN58291HCM", "VN20481HCM", "VN39482HCM",
+        "VN84920HCM", "VN74829HCM", "VN19482HCM", "VN63920HCM", "VN52910HCM",
+        "VN48291HCM", "VN30291HCM", "VN91029HCM"
+    ],
+    "Người Nhận": [
+        "Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C", "Phạm Minh D", "Hoàng Thục E",
+        "Đỗ Tiến F", "Bùi Quang G", "Vũ Tuyết H", "Ngô Quốc I", "Lý Thanh J",
+        "Dương Thúy K", "Tống Gia L", "Trịnh Đình M"
+    ],
+    "Địa Chỉ Giao Hàng": [
+        "100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3", "12 Lê Lợi, Q1", "45 Nguyễn Huệ, Q1",
+        "88 Nam Kỳ Khởi Nghĩa, Q1", "150 Nguyễn Thị Minh Khai, Q3", "200 Cách Mạng Tháng 8, Q3", "15 Trần Hưng Đạo, Q5", "50 An Dương Vương, Q5",
+        "300 Nguyễn Thị Thập, Q7", "55 Nguyễn Văn Linh, Q7", "105 Khánh Hội, Q4"
+    ],
+    "Loại Hàng Hóa": [
+        "Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn", "Quần áo thời trang", "Mỹ phẩm cao cấp",
+        "Giày dép thể thao", "Sách & Văn phòng phẩm", "Đồ gia dụng nhỏ", "Thực phẩm khô", "Trái cây nhập khẩu",
+        "Thiết bị y tế", "Đồ chơi trẻ em", "Phụ kiện máy tính"
+    ],
+    "Trạng Thái": [
+        "Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
+        "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển", "Chờ phân loại", "Chờ phân loại",
+        "Đang vận chuyển", "Chờ phân loại", "Đang vận chuyển"
+    ]
 }
 
 # Hàm định vị lấy tọa độ từ địa chỉ chuỗi thông qua Nominatim OpenStreetMap API
@@ -119,102 +141,4 @@ tab_monitor, tab_map, tab_order = st.tabs([
 # ------------------------------------------
 with tab_monitor:
     st.write(f"**Đang giám sát:** {selected_start_hub}")
-    col_m1, col_m2, col_m3 = st.columns(3)
-    with col_m1:
-        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">ĐA GIAO POD</p><h3 style="margin:5px 0 0 0; color:#0056b3;">1.420 kiện</h3></div>', unsafe_allow_html=True)
-    with col_m2:
-        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">BƯU TÁ THỰC ĐỊA</p><h3 style="margin:5px 0 0 0; color:#0056b3;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
-    with col_m3:
-        st.markdown('<div class="metric-card"><p style="color:#64748b; font-weight:bold; margin:0;">TỶ LỆ TOÀN TRÌNH</p><h3 style="margin:5px 0 0 0; color:#e67e22;">94.8 %</h3></div>', unsafe_allow_html=True)
-
-    st.write("---")
-    col_c1, col_c2 = st.columns(2)
-    with col_c1:
-        st.write("#### Sản lượng giao thành công theo quận")
-        st.bar_chart(pd.DataFrame(DISTRICT_DATA, index=DISTRICT_INDEX), color=["#0056b3", "#ffc745"])
-    with col_c2:
-        st.write("#### Trọng tải vận chuyển trong tuần (Tấn)")
-        st.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
-
-# ------------------------------------------
-# TAB 2: TỐI ƯU TUYẾN ĐƯỜNG ĐA ĐIỂM & BẢN ĐỒ
-# ------------------------------------------
-with tab_map:
-    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế")
-    col_left, col_right = st.columns([1.8, 1.2])
-    
-    # Khởi tạo bản đồ nền tại trung tâm TP.HCM
-    m = folium.Map(location=[10.7760, 106.7032], zoom_start=13)
-
-    if activated:
-        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
-        if start_input.strip() and raw_stops:
-            try:
-                start_loc = get_coordinates_from_address(start_input)
-                if start_loc:
-                    all_coordinates = [[start_loc['lat'], start_loc['lon']]]
-                    valid_names = ["Bưu cục xuất phát"]
-                    
-                    # Duyệt danh sách tìm tọa độ các điểm dừng chân
-                    for idx, stop_addr in enumerate(raw_stops, 1):
-                        loc = get_coordinates_from_address(stop_addr)
-                        if loc:
-                            all_coordinates.append([loc['lat'], loc['lon']])
-                            valid_names.append(f"Điểm {idx}: {stop_addr}")
-                    
-                    if len(all_coordinates) >= 2:
-                        total_dist = 0.0
-                        total_time = 0.0
-                        m = folium.Map(location=all_coordinates[0], zoom_start=14)
-                        
-                        # Điểm khởi hành (Xanh lá)
-                        folium.Marker(all_coordinates[0], tooltip="XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
-                        
-                        # Vẽ định tuyến chuỗi điểm nối tiếp nhau (OSRM API)
-                        for i in range(len(all_coordinates) - 1):
-                            p_start = all_coordinates[i]
-                            p_end = all_coordinates[i+1]
-                            
-                            folium.Marker(p_end, tooltip=valid_names[i+1], icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
-                            
-                            url = f"http://router.project-osrm.org/route/v1/driving/{p_start[1]},{p_start[0]};{p_end[1]},{p_end[0]}?overview=full&geometries=geojson"
-                            res = requests.get(url).json()
-                            
-                            if res.get('code') == 'Ok':
-                                chunk = res['routes'][0]
-                                gps_coords = [[c[1], c[0]] for c in chunk['geometry']['coordinates']]
-                                total_dist += chunk['distance'] / 1000
-                                total_time += chunk['duration'] / 60
-                                folium.PolyLine(gps_coords, color="#0056b3", weight=5, opacity=0.8).add_to(m)
-                        
-                        fuel_rate = 2.5 if "máy" in vehicle_type else 9.0
-                        fuel_cost = (total_dist / 100) * fuel_rate * 23000
-                        
-                        with col_left:
-                            folium_static(m, width=700, height=450)
-                        with col_right:
-                            st.write("##### THÔNG TIN HÀNH TRÌNH")
-                            st.info(f"Tổng quãng đường: {total_dist:.2f} km\n\nThời gian dự kiến: {total_time:.1f} phút\n\nChi phí nhiên liệu: {fuel_cost:.0f} VND")
-                            st.write("---")
-                            st.write("**Thứ tự lịch trình di chuyển:**")
-                            for name in valid_names:
-                                st.write(f"- {name}")
-                else:
-                    st.error("Không định vị được địa chỉ bưu cục xuất phát.")
-            except Exception as e:
-                st.error(f"Lỗi hệ thống bản đồ hành trình: {e}")
-        else:
-            with col_left:
-                folium_static(m, width=700, height=450)
-    else:
-        with col_left:
-            folium_static(m, width=700, height=450)
-        with col_right:
-            st.info("Vui lòng điền danh sách các địa chỉ dừng nhận ở thanh điều hướng bên trái và nhấn nút để phân tích.")
-
-# ------------------------------------------
-# TAB 3: QUẢN LÝ VẬN ĐƠN BƯU KIỆN
-# ------------------------------------------
-with tab_order:
-    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
-    st.dataframe(pd.DataFrame(MOCK_ORDERS), use_container_width=True)
+    col_m1, col_m2, col_m3 = st.
