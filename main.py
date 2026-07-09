@@ -27,7 +27,9 @@ VNPOST_HUBS = {
 
 POPULAR_STOPS = {
     "100 cao thắng": [10.7745, 106.6811], "320 nguyễn du": [10.7712, 106.6945],
-    "hồ con rùa": [10.7827, 106.6961], "220 hồ con rùa": [10.7827, 106.6961], "02 võ oanh": [10.8021, 106.7142]
+    "hồ con rùa": [10.7827, 106.6961], "220 hồ con rùa": [10.7827, 106.6961], 
+    "02 võ oanh": [10.8021, 106.7142], "100 xa lộ hà nội": [10.8014, 106.7532],
+    "14 tân quy": [10.7412, 106.7110]
 }
 
 DISTRICT_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
@@ -55,7 +57,7 @@ with st.sidebar:
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     st.text_area("Địa chỉ bưu cục điều phối:", value=VNPOST_HUBS[selected_start_hub]["address"], height=70, disabled=True)
     st.write("---")
-    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="100 Cao Thắng\n320 Nguyễn Du\nHồ Con Rùa", height=120)
+    stops_input = st.text_area("Các điểm dừng phát hàng (1 dòng/địa chỉ):", value="02 Võ Oanh\n100 Xa Lộ Hà Nội\n14 Tân Quy", height=120)
     vehicle_type = st.radio("Phương tiện vận chuyển:", ["Xe máy bưu tá chặng cuối", "Xe tải bưu chính lớn"])
     activated = st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA")
 
@@ -76,19 +78,21 @@ with tab_monitor:
     col_c2.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
 
 with tab_map:
-    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế")
+    st.write("### Bản đồ điều phối chuỗi điểm giao hàng cho tài xế (Cơ chế tuần tự)")
     col_left, col_right = st.columns([1.8, 1.2])
     start_lat, start_lon = VNPOST_HUBS[selected_start_hub]["lat"], VNPOST_HUBS[selected_start_hub]["lon"]
     
-    m = folium.Map(location=[start_lat, start_lon], zoom_start=14)
+    m = folium.Map(location=[start_lat, start_lon], zoom_start=13)
     Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
 
     if activated:
         raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
         if raw_stops:
             try:
+                # Xây dựng chuỗi tọa độ theo đúng thứ tự nhập vào
                 all_coordinates = [[start_lat, start_lon]]
                 valid_names = [f"Xuất phát: {selected_start_hub}"]
+                
                 for idx, stop_addr in enumerate(raw_stops, 1):
                     loc = get_coordinates_from_address(stop_addr)
                     if loc:
@@ -97,13 +101,18 @@ with tab_map:
                 
                 if len(all_coordinates) >= 2:
                     total_dist, total_time = 0.0, 0.0
-                    m = folium.Map(location=all_coordinates[0], zoom_start=14)
+                    m = folium.Map(location=all_coordinates[0], zoom_start=13)
                     Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
+                    
+                    # Đánh dấu điểm xuất phát (Bưu cục)
                     folium.Marker(all_coordinates[0], tooltip="XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
                     
+                    # Định tuyến tuần tự giữa các cặp điểm liên tiếp
                     for i in range(len(all_coordinates) - 1):
                         p_start, p_end = all_coordinates[i], all_coordinates[i+1]
                         folium.Marker(p_end, tooltip=valid_names[i+1], icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                        
+                        # Gọi OSRM Route API tuần tự
                         url = f"http://router.project-osrm.org/route/v1/driving/{p_start[1]},{p_start[0]};{p_end[1]},{p_end[0]}?overview=full&geometries=geojson"
                         try:
                             res = requests.get(url, timeout=5).json()
@@ -113,22 +122,29 @@ with tab_map:
                                 total_time += chunk['duration'] / 60
                                 folium.PolyLine([[c[1], c[0]] for c in chunk['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.8).add_to(m)
                         except:
+                            # Phương án dự phòng chim bay nếu mạng lỗi
                             folium.PolyLine([p_start, p_end], color="#ef4444", weight=4, dash_array='5, 5').add_to(m)
-                            total_dist += math.sqrt((p_start[0]-p_end[0])**2 + (p_start[1]-p_end[1])**2) * 111
-                            total_time += (total_dist * 2)
+                            dist_backup = math.sqrt((p_start[0]-p_end[0])**2 + (p_start[1]-p_end[1])**2) * 111
+                            total_dist += dist_backup
+                            total_time += (dist_backup * 2)
                     
                     fuel = 2.5 if "máy" in vehicle_type else 9.0
                     with col_right:
-                        st.write("##### THÔNG TIN HÀNH TRÌNH")
+                        st.write("##### THÔNG TIN HÀNH TRÌNH TUẦN TỰ")
                         st.info(f"Quãng đường: {total_dist:.2f} km\n\nThời gian: {total_time:.1f} phút\n\nNhiên liệu: {(total_dist/100)*fuel*23000:.0f} VND")
                         st.write("---")
-                        for name in valid_names: st.write(f"- {name}")
-            except Exception as e: st.error(f"Lỗi: {e}")
+                        st.write("**Thứ tự các chặng di chuyển:**")
+                        for name in valid_names: 
+                            st.write(f"- {name}")
+            except Exception as e: 
+                st.error(f"Lỗi hệ thống: {e}")
     else:
         folium.Marker([start_lat, start_lon], tooltip=selected_start_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
-        with col_right: st.info("Nhấn nút bên trái để kích hoạt tối ưu lộ trình!")
+        with col_right: 
+            st.info("Nhấn nút bên trái để kích hoạt tối ưu lộ trình!")
         
-    with col_left: folium_static(m, width=700, height=450)
+    with col_left: 
+        folium_static(m, width=700, height=450)
 
 with tab_order:
     st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
