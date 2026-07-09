@@ -4,6 +4,7 @@ from folium.plugins import Fullscreen
 import requests
 import pandas as pd
 from streamlit_folium import folium_static
+import time
 
 st.set_page_config(page_title="VNPOST Logistics - Tối ưu hóa", layout="wide")
 
@@ -58,11 +59,10 @@ def get_coordinates_from_address(address_text):
     return {"lat": 10.7760, "lon": 106.7032}
 
 with st.sidebar:
-    # ĐÃ ĐỔI LINK LOGO: Sử dụng link ảnh thô trực tiếp CDN sạch, hiển thị ổn định trên mọi môi trường Cloud
-    st.image(
-        "https://raw.githubusercontent.com/thevnh/p_logos/main/vnpost.png",
-        use_container_width=True
-    )
+    # SỬA LỖI CACHE: Thêm mốc thời gian ngẫu nhiên buộc hệ thống xóa cache ảnh cũ
+    logo_url = f"https://raw.githubusercontent.com/thevnh/p_logos/main/vnpost.png?t={int(time.time())}"
+    st.image(logo_url, use_container_width=True)
+    
     st.write("")
     st.write("### CẤU HÌNH PHÂN TUYẾN")
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
