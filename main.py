@@ -60,21 +60,21 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM (ĐÃ CHUẨN HÓA ĐỊA CHỈ ĐỂ TRA CỨU API)
 VNPOST_HUBS = {
-    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Quận 1",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng, Quận 1",
-    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Quận 1",
-    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Quận 1",
+    "Bưu cục Giao dịch Sài Gòn": "2 Công xã Paris, Quận 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn": "117 Hai Bà Trưng, Quận 1",
+    "Bưu cục Tân Định": "230 Hai Bà Trưng, Quận 1",
+    "Bưu cục Trần Hưng Đạo": "447B Trần Hưng Đạo, Quận 1",
     "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Quận 3",
-    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Quận 3",
-    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Quận 3",
+    "Bưu cục Bàn Cờ": "49A Cao Thắng, Quận 3",
+    "Bưu cục Vườn Xoài": "472 Lê Văn Sỹ, Quận 3",
     "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Quận 4",
-    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Quận 4",
-    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Quận 5",
+    "Bưu cục Khánh Hội": "52 Lê Quốc Hưng, Quận 4",
+    "Bưu cục Nguyễn Trãi": "49 Nguyễn Trãi, Quận 5",
     "Bưu cục Quận 5": "26 Nguyễn Thi, Quận 5",
     "Bưu cục Quận 6": "88 Tháp Mười, Quận 6",
-    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Quận 7",
+    "Bưu cục Tân Phong": "565 Nguyễn Thị Thập, Quận 7",
     "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Quận 7"
 }
 
@@ -110,7 +110,7 @@ def generate_turn_by_turn(geometry_coords):
     instructions.append("🔴 **Đến nơi:** Địa điểm bàn giao hàng nằm phía trước.")
     return instructions[:6]
 
-# 3. THIẾT LẬP THANH SIDEBAR (CẤU HÌNH LỘ TRÌNH) CHUẨN GIAO DIỆN CỦA BẠN
+# 3. THIẾT LẬP THANH SIDEBAR NGUYÊN BẢN CỦA BẠN
 with st.sidebar:
     st.markdown("""### 🛠️ Cấu hình lộ trình""")
     selected_start_hub = st.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
@@ -174,6 +174,28 @@ with tab_routing:
     
     col_left, col_right = st.columns([1.8, 1.2])
     
-    # Định nghĩa bản đồ mặc định ban đầu để tránh NameError biến 'm' chưa tồn tại
+    # KHỞI TẠO BẢN ĐỒ AN TOÀN TRƯỚC (SỬA TRIỆT ĐỂ LỖI NAMERROR BIẾN M)
     default_lat, default_lon = 10.7760, 106.7032
     m = folium.Map(location=[default_lat, default_lon], zoom_start=14, control_scale=True)
+
+    if activated:
+        if not start_input.strip() or not end_input.strip():
+            with col_left:
+                st.warning("⚠️ Vui lòng điền đầy đủ thông tin vị trí ở thanh Sidebar bên trái!")
+                folium_static(m, width=700, height=480)
+        else:
+            try:
+                with st.spinner("🔍 Đang kết nối máy chủ dữ liệu nền vệ tinh GPS..."):
+                    loc1 = get_coordinates_from_address(start_input)
+                    loc2 = get_coordinates_from_address(end_input)
+                    
+                    if not loc1:
+                        with col_left:
+                            st.error(f"❌ Không tìm thấy vị trí bưu cục: '{start_input}'")
+                            folium_static(m, width=700, height=480)
+                    elif not loc2:
+                        with col_left:
+                            st.error(f"❌ Không tìm thấy vị trí địa chỉ khách hàng: '{end_input}'")
+                            folium_static(m, width=700, height=480)
+                    else:
+                        url = f"http://router.project-osrm.org/route/v1/driving/{loc
