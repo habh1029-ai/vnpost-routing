@@ -82,7 +82,7 @@ st.markdown("""
             box-shadow: 0 4px 10px rgba(0,86,179,0.3);
         }
     </style>
-""", unsafe_allow_html=True)  # <-- Đã sửa thành công lỗi gõ thừa chữ ở đây!
+""", unsafe_allow_html=True)
 
 
 def get_advanced_libraries():
@@ -242,7 +242,7 @@ with tab_enterprise:
             st.warning("⚠️ Hệ thống phát hiện có **24 bưu phẩm cồng kềnh** có kích thước vượt giỏ hàng xe máy thông thường.")
             st.markdown("""
             * 🛵 **Xe máy bưu tá:** Phù hợp bưu phẩm thư từ, tài liệu gọn (< 5kg).
-            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bổ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
+            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bỏ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
             """)
 
 # ------------------------------------------
@@ -251,7 +251,8 @@ with tab_enterprise:
 with tab_routing:
     st.markdown("### 🗺️ Bản đồ Định tuyến & Tối ưu lộ trình bưu tá")
     
-    st.sidebar.markdown("<h3 style='color:#0056b3;'>🛠️ Cấu hình lộ trình</h3>", unsafe_allow_html=True)
+    # TIÊU ĐỀ THANH BÊN ĐÃ ĐƯỢC THAY ĐỔI THÀNH " Thiết lập Lộ trình Tối ưu"
+    st.sidebar.markdown("<h3 style='color:#0056b3;'> Thiết lập Lộ trình Tối ưu</h3>", unsafe_allow_html=True)
     
     selected_start_hub = st.sidebar.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     start_address = VNPOST_HUBS[selected_start_hub]
