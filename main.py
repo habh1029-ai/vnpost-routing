@@ -16,6 +16,53 @@ def get_advanced_libraries():
 st.title("✉️ TỐI ƯU HÓA TUYẾN ĐƯỜNG TRONG HOẠT ĐỘNG BƯU CHÍNH CỦA VIETNAM POST")
 st.subheader("Hệ thống quản lý, điều phối trạng thái và định tuyến thực địa thông minh")
 
+# CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN
+VNPOST_HUBS = {
+    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Phường Bến Nghé, Quận 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117-119 Hai Bà Trưng, Phường Bến Nghé, Quận 1",
+    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Phường Tân Định, Quận 1",
+    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Phường Cầu Kho, Quận 1",
+    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Phường 6, Quận 3",
+    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Phường 3, Quận 3",
+    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Phường 14, Quận 3",
+    "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Phường 13, Quận 4",
+    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Phường 12, Quận 4",
+    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Phường 2, Quận 5",
+    "Bưu cục Quận 5": "26 Nguyễn Thi, Phường 13, Quận 5",
+    "Bưu cục Quận 6": "88-90 Tháp Mười, Phường 2, Quận 6",
+    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Phường Tân Phong, Quận 7",
+    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Phường Phú Mỹ, Quận 7",
+    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển Phường 4, Quận 8",
+    "Bưu cục Quận 8": "428 Tùng Thiện Vương, Phường 13, Quận 8",
+    "Bưu cục Quận 10": "157 Lý Thái Tổ, Phường 9, Quận 10",
+    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám, Phường 13, Quận 10",
+    "Bưu cục Phú Thọ (Q10)": "270Bis Lý Thường Kiệt, Phường 14, Quận 10",
+    "Bưu cục Quận 11": "244 Minh Phụng, Phường 16, Quận 11",
+    "Bưu cục Quang Trung (Q12)": "Đường Tô Ký, Phường Đông Hưng Thuận, Quận 12",
+    "Bưu cục Tân Thới Nhất (Q12)": "44/6 Phan Văn Hớn, Phường Tân Thới Nhất, Quận 12",
+    "Bưu cục An Khánh (Q2 cũ)": "D7/2A Trần Não, Phường Bình Khánh, Quận 2",
+    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh, Phường Bình Trưng Tây, Quận 2",
+    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện, Phường Hiệp Phú, Quận 9",
+    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2, Phường Phước Bình, Quận 9",
+    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa, Phường Tam Bình, Thủ Đức",
+    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4, Phường Linh Trung, Thủ Đức",
+    "Bưu cục Thủ Đức": "128A Kha Vạn Cân, Phường Trường Thọ, Thủ Đức",
+    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh, Phường 17, Bình Thạnh",
+    "Bưu cục Bình Thạnh": "03 Phan Đăng Lưu, Phường 3, Bình Thạnh",
+    "Bưu cục Phú Nhuận": "241 Phan Đình Phùng, Phường 15, Phú Nhuận",
+    "Bưu cục Gò Vấp": "555 Lê Quang Định, Phường 1, Gò Vấp",
+    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm, Phường 9, Gò Vấp",
+    "Bưu cục Tân Sơn Nhất (Tân Bình)": "2B/2 Bạch Đằng, Phường 2, Tân Bình",
+    "Bưu cục Tân Bình": "288A Hoàng Văn Thụ, Phường 4, Tân Bình",
+    "Bưu cục Chí Hòa (Tân Bình)": "695-697 Cách Mạng Tháng Tám, Phường 6, Tân Bình",
+    "Bưu cục Gò Dầu (Tân Phú)": "Chung cư Gò Dầu 2, Phường Tân Sơn Nhì, Tân Phú",
+    "Bưu cục Tân Phú": "90 Lô B Nguyễn Sơn, Phường Phú Thọ Hòa, Tân Phú",
+    "Bưu cục Bình Hưng Hòa (Bình Tân)": "1026 Tân Kỳ Tân Quý, Phường Bình Hưng Hòa, Bình Tân",
+    "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57/7 Lý Nam Đế, Thị trấn Hóc Môn, Hóc Môn",
+    "Bưu cục Tân Phú Trung (Củ Chi)": "912 Quốc Lộ 22, Xã Tân Phú Trung, Củ Chi",
+    "Bưu cục Bình Chánh": "E9/37 Nguyễn Hữu Trí, Thị trấn Tân Túc, Bình Chánh"
+}
+
 # THUẬT TOÁN TỰ ĐỘNG CHUYỂN ĐỔI ĐỊA CHỈ THÀNH TỌA ĐỘ GPS (GEOCODING)
 def get_coordinates_from_address(address_text):
     try:
@@ -79,19 +126,11 @@ tab_enterprise, tab_routing, tab_status = st.tabs([
 with tab_enterprise:
     st.header("Tổng công ty Bưu điện Việt Nam - Vietnam Post")
     
-    # Bộ lọc Bưu cục (Hub-Filtering)
-    hub_selected = st.selectbox("Lựa chọn bưu cục quản lý tại khu vực TP.HCM:", [
-        "Bưu cục Trung tâm Quận 1 (Số 2 Công xã Paris)",
-        "Bưu cục Giao vận Quận 3 (Cách Mạng Tháng 8)",
-        "Bưu cục Khai thác Chợ Lớn (Quận 5)",
-        "Trung tâm khai thác chia chọn Miền Nam (Hiệp Phước)"
-    ])
+    hub_selected = st.selectbox("Lựa chọn bưu cục quản lý hệ thống:", list(VNPOST_HUBS.keys()))
+    st.info(f"💡 **Vị trí địa lý:** {VNPOST_HUBS[hub_selected]}")
     
     col_info1, col_info2 = st.columns(2)
     with col_info1:
-        st.info(f"💡 **Thông tin điều phối hành chính**\n\nHệ thống đang hiển thị dữ liệu thời gian thực được kết nối trực tiếp từ máy chủ quản trị của **{hub_selected}**.")
-        
-        # Thống kê Tiến độ KPI động
         st.markdown("### 📊 Tiến độ khai thác sản lượng trong ngày")
         st.write("Tỷ lệ bưu phẩm đã phát thành công chặng cuối:")
         st.progress(0.85)
@@ -115,10 +154,16 @@ with tab_routing:
     st.header("Hệ thống tối ưu đường đi thực địa bưu chính")
     
     st.sidebar.header("🛠️ Cấu hình lộ trình chặng phát")
-    start_input = st.sidebar.text_input("Địa chỉ bưu cục xuất phát:", "320 Nguyễn Du")
-    end_input = st.sidebar.text_input("Địa chỉ phát hàng của khách:", "100 Cao Thắng")
     
-    # Bộ lọc Phương tiện di chuyển (Xe máy / Xe tải)
+    # Cho phép chọn nhanh bưu cục xuất phát từ danh sách chuẩn dữ liệu vừa cung cấp
+    selected_start_hub = st.sidebar.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
+    start_address = VNPOST_HUBS[selected_start_hub]
+    
+    st.sidebar.text("📍 Địa chỉ bưu cục tự động điền:")
+    start_input = st.sidebar.text_area("Từ bưu cục:", value=start_address, height=70)
+    
+    end_input = st.sidebar.text_input("Địa chỉ phát hàng của khách (Ví dụ: 100 Cao Thắng):", "100 Cao Thắng")
+    
     vehicle_type = st.sidebar.radio("Lựa chọn phương tiện vận chuyển:", ["🛵 Xe máy bưu tá chặng cuối", "🚚 Xe tải bưu chính lớn"])
     
     st.sidebar.markdown("---")
@@ -126,7 +171,6 @@ with tab_routing:
 
     col_left, col_right = st.columns([2, 1])
 
-    # Khởi tạo bản đồ nền tĩnh mặc định ban đầu
     default_lat, default_lon = 10.7760, 106.7032
     m = folium.Map(location=[default_lat, default_lon], zoom_start=14, control_scale=True)
     folium.TileLayer('openstreetmap', name='Bản đồ đường phố').add_to(m)
@@ -157,19 +201,17 @@ with tab_routing:
                             geometry = route_data['geometry']['coordinates']
                             detailed_route_gps = [[coord[1], coord[0]] for coord in geometry]
                             
-                            total_distance = route_data['distance'] # Mét
-                            duration = route_data['duration'] # Giây
+                            total_distance = route_data['distance']
+                            duration = route_data['duration']
                             
-                            # Ước tính Chi phí Nhiên liệu thực tế dựa trên số KM
                             distance_km = total_distance / 1000
                             if "🛵" in vehicle_type:
-                                fuel_consumption = (distance_km / 100) * 2.5 * 23000 # 2.5 Lít/100km, Giá xăng 23k
+                                fuel_consumption = (distance_km / 100) * 2.5 * 23000
                             else:
-                                fuel_consumption = (distance_km / 100) * 9.0 * 23000 # 9 Lít/100km cho xe tải
+                                fuel_consumption = (distance_km / 100) * 9.0 * 23000
                             
                             nav_instructions = generate_turn_by_turn(detailed_route_gps)
                             
-                            # Cấu trúc hiển thị bản đồ
                             center_lat = (loc1['lat'] + loc2['lat']) / 2
                             center_lon = (loc1['lon'] + loc2['lon']) / 2
                             m = folium.Map(location=[center_lat, center_lon], zoom_start=15, control_scale=True)
@@ -186,8 +228,8 @@ with tab_routing:
                                 st.write(f"🗺️ **Tuyến đường bưu chính bám sát lòng đường:**")
                                 folium_static(m, width=800, height=520)
                                 
-                                gps_text = f"Lộ trình hành trình: {start_input} -> {end_input} | Tổng khoảng cách: {distance_km:.2f} km."
-                                st.text_input("Chuỗi dữ liệu định vị (Dùng để đồng bộ hoặc quét thiết bị ngoại vi):", value=gps_text)
+                                gps_text = f"Lộ trình hành trình: {selected_start_hub} -> {end_input} | Tổng khoảng cách: {distance_km:.2f} km."
+                                st.text_input("Chuỗi dữ liệu định vị (Dùng để đồng bộ):", value=gps_text)
                                 
                             with col_right:
                                 st.write("📱 **Màn hình điều hướng bưu tá:**")
@@ -221,7 +263,6 @@ with tab_routing:
 with tab_status:
     st.header("Trung tâm Quản lý & Đối soát Vận đơn Chặng cuối")
     
-    # Bảng hàng đợi công việc (Order Queue) mô phỏng danh sách đơn cần xử lý trong ngày
     st.write("📋 **Danh sách các vận đơn bưu chính được phân bổ cho bạn hôm nay:**")
     mock_orders = {
         "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM", "VN30294HCM"],
@@ -247,7 +288,6 @@ with tab_status:
         ]
         current_status = st.selectbox("Cập nhật trạng thái mới cho bưu phẩm:", status_options, index=0)
         
-        # Phân loại Lý do Giao hàng Thất bại
         if "Thất bại" in current_status:
             fail_reason = st.selectbox("Lý do giao hàng thất bại cụ thể:", [
                 "Khách hàng tắt máy, không liên lạc được (Quá 3 lần gọi)",
@@ -256,13 +296,11 @@ with tab_status:
                 "Khách hàng từ chối nhận bưu phẩm do đổi ý"
             ])
             
-        # Trực quan Bằng chứng Giao hàng - POD
         elif "Thành công" in current_status:
             st.success("Tích hợp hồ sơ POD - Vui lòng lưu bằng chứng phát hành bên dưới:")
             st.file_uploader("📸 Tải lên ảnh chụp ký nhận thực tế tại nhà khách (Bằng chứng POD):", type=["jpg", "png", "jpeg"])
             st.text_input("Họ tên người ký nhận thay (nếu có):")
             
-        # Báo cáo Sự cố khẩn cấp (SOS thực địa)
         elif "SOS" in current_status:
             st.error("🚨 HỆ THỐNG CẢNH BÁO SỰ CỐ KHẨN CẤP")
             sos_reason = st.text_area("Mô tả chi tiết sự cố thực địa (Ví dụ: Xe hỏng hóc, tai nạn, ngập lụt nghiêm trọng...):", 
