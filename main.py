@@ -3,7 +3,7 @@ import folium
 from folium.plugins import Fullscreen
 import requests
 import pandas as pd
-from streamlit_folium import folium_static
+from streamlit_folium import st_folium  # Đã đổi sang st_folium để sửa lỗi không hiện bản đồ
 
 st.set_page_config(page_title="VNPOST Logistics", layout="wide")
 
@@ -29,7 +29,7 @@ POPULAR_STOPS = {
     "14 tân quy": [10.7412, 106.7110], "680 xô viết nghệ tĩnh": [10.8122, 106.7161],
     "100 cao thắng": [10.7745, 106.6811], "320 nguyễn du": [10.7712, 106.6945],
     "hồ con rùa": [10.7827, 106.6961], "120 cách mạng tháng tám": [10.7792, 106.6881],
-    "240 điện biên phủ": [10.7865, 106.6915], "312 võ thị sáu": [10.7849, 106.872]
+    "240 điện biên phủ": [10.7865, 106.6915], "312 võ thị sáu": [10.7849, 106.6872]
 }
 
 D_DATA = {"Thành công": [420, 380, 290, 180, 150], "Hoàn lại": [15, 22, 12, 8, 19]}
@@ -37,9 +37,14 @@ D_IDX = ["Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 4"]
 W_DATA = {"Xe máy": [2.1, 2.8, 3.2, 2.9, 3.5, 4.1, 1.5], "Xe tải": [8.5, 9.2, 11.0, 10.1, 12.4, 14.0, 5.0]}
 W_IDX = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 
-# ĐÃ FIX: Gom DataFrame trên một dòng duy nhất để tránh lỗi "never closed"
 if "orders_data" not in st.session_state:
-    st.session_state.orders_data = pd.DataFrame({"Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"], "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C"], "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3"], "Loại Hàng Hóa": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn"], "Trạng Thái": ["Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển"]})
+    st.session_state.orders_data = pd.DataFrame({
+        "Mã Vận Đơn": ["VN94827HCM", "VN10482HCM", "VN58291HCM"], 
+        "Người Nhận": ["Nguyễn Văn A", "Trần Thị B", "Lê Hoàng C"], 
+        "Địa Chỉ Giao Hàng": ["100 Cao Thắng, Q3", "320 Nguyễn Du, Q1", "Hồ Con Rùa, Q3"], 
+        "Loại Hàng Hóa": ["Tài liệu mật", "Linh kiện điện tử", "Bưu kiện lớn"], 
+        "Trạng Thái": ["Đang vận chuyển", "Đang vận chuyển", "Đang vận chuyển"]
+    })
 
 def get_coordinates_from_address(address_text):
     clean_addr = address_text.lower().strip()
@@ -58,7 +63,7 @@ with st.sidebar:
     activated = st.button("TỐI ƯU LỘ TRÌNH THỰC ĐỊA")
 
 st.markdown('<p class="main-title">VIETNAM POST - ĐIỀU HÀNH LOGISTICS ĐA ĐIỂM</p>', unsafe_allow_html=True)
-tab_monitor, tab_map, tab_order = st.tabs(["Trung tâm Giám sát", "Tối ưu Tuyến đường Đa điểm", "Quản lý Vận đơn"])
+tab_monitor, tab_map, tab_order = st.tabs(["Trung tâm Gi sát", "Tối ưu Tuyến đường Đa điểm", "Quản lý Vận đơn"])
 
 with tab_monitor:
     st.write(f"**Đang giám sát:** {selected_hub}")
@@ -77,4 +82,89 @@ with tab_monitor:
 with tab_map:
     st.write("### Bản đồ điều phối chuỗi điểm giao hàng (Giải thuật TSP tự động gom điểm gần)")
     col_left, col_right = st.columns([1.8, 1.2])
-    start_lat, start_lon = VNPOST_HUBS[selected_hub]["lat"], VNPOST_HUBS
+    start_lat, start_lon = VNPOST_HUBS[selected_hub]["lat"], VNPOST_HUBS[selected_hub]["lon"]
+    
+    m = folium.Map(location=[start_lat, start_lon], zoom_start=12)
+    Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
+
+    if activated:
+        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
+        if raw_stops:
+            try:
+                base_coords = [[start_lon, start_lat]]
+                addr_mapping = {0: f"Xuất phát từ {selected_hub}"}
+                
+                for idx, stop_addr in enumerate(raw_stops, 1):
+                    loc = get_coordinates_from_address(stop_addr)
+                    base_coords.append([loc['lon'], loc['lat']])
+                    addr_mapping[idx] = f"{stop_addr}"
+                
+                coord_str = ";".join([f"{c[0]},{c[1]}" for c in base_coords])
+                url = f"http://router.project-osrm.org/trip/v1/driving/{coord_str}?source=first&destination=any&overview=full&geometries=geojson"
+                
+                res = requests.get(url, timeout=5).json()
+                if res.get('code') == 'Ok':
+                    trip = res['trips'][0]
+                    waypoints = res['waypoints']
+                    
+                    total_dist = trip['distance'] / 1000
+                    total_time = trip['duration'] / 60
+                    
+                    folium.PolyLine([[c[1], c[0]] for c in trip['geometry']['coordinates']], color="#0056b3", weight=5, opacity=0.85).add_to(m)
+                    
+                    waypoints_sorted = sorted(waypoints, key=lambda x: x['waypoint_index'])
+                    optimized_names = []
+                    
+                    current_stop_number = 1
+                    for w in waypoints_sorted:
+                        w_idx = w['waypoint_index']
+                        curr_coords = [w['location'][1], w['location'][0]]
+                        
+                        if w_idx == 0:
+                            folium.Marker(curr_coords, tooltip="ĐIỂM XUẤT PHÁT", icon=folium.Icon(color='green', icon='play')).add_to(m)
+                            optimized_names.insert(0, f"Khởi hành: {addr_mapping[w_idx]}")
+                        else:
+                            folium.Marker(curr_coords, tooltip=f"Chặng {current_stop_number}: {addr_mapping[w_idx]}", icon=folium.Icon(color='blue', icon='info-sign')).add_to(m)
+                            optimized_names.append(f"Chặng {current_stop_number} ➔ Giao đến: {addr_mapping[w_idx]}")
+                            current_stop_number += 1
+
+                    fuel = 2.5 if "máy" in vehicle_type else 9.0
+                    with col_right:
+                        st.write("##### THÔNG TIN LỘ TRÌNH ĐÃ TỐI ƯU THỨ TỰ")
+                        st.info(f"Tổng quãng đường: {total_dist:.2f} km\n\nƯớc tính thời gian: {total_time:.1f} phút\n\nNhiên liệu tiêu thụ: {(total_dist/100)*fuel*23000:.0f} VND")
+                        st.write("---")
+                        st.write("**Lộ trình đi tuần tự thông minh (gần xếp trước, xa xếp sau):**")
+                        for name in optimized_names: 
+                            st.write(name)
+                else:
+                    st.error("Không tìm thấy giải pháp tối ưu từ API.")
+            except Exception as e:
+                st.error(f"Lỗi xử lý thuật toán: {e}")
+    else:
+        folium.Marker([start_lat, start_lon], tooltip=selected_hub, icon=folium.Icon(color='orange', icon='home')).add_to(m)
+        with col_right: 
+            st.info("Nhấn nút bên trái để hệ thống kích hoạt tự động sắp xếp điểm gần nhau!")
+        
+    with col_left: 
+        # SỬA LỖI: Sử dụng st_folium thay vì folium_static để hiển thị mượt mà trên môi trường đám mây
+        st_folium(m, width=700, height=450, key="vnpost_map")
+
+with tab_order:
+    st.write("### Danh sách kiểm soát bưu kiện chặng cuối")
+    # SỬA LỖI: Đồng bộ hóa cập nhật hai chiều giữa data_editor và session_state
+    updated_df = st.data_editor(
+        st.session_state.orders_data, 
+        use_container_width=True, 
+        disabled=["Mã Vận Đơn", "Người Nhận", "Địa Chỉ Giao Hàng", "Loại Hàng Hóa"], 
+        column_config={
+            "Trạng Thái": st.column_config.SelectboxColumn(
+                "Trạng Thái", 
+                options=["Đang vận chuyển", "Giao thành công (POD)", "Giao thất bại - Hoàn bưu cục"], 
+                required=True
+            )
+        },
+        key="orders_editor"
+    )
+    if not updated_df.equals(st.session_state.orders_data):
+        st.session_state.orders_data = updated_df
+        st.rerun()  # Kích hoạt cập nhật lại giao diện ngay khi trạng thái đổi
