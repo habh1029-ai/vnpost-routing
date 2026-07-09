@@ -25,7 +25,6 @@ VNPOST_HUBS = {
     "Bưu cục Quận 7": {"address": "1441 Huỳnh Tấn Phát, Quận 7", "lat": 10.7351, "lon": 106.7323}
 }
 
-# Bổ sung đầy đủ tọa độ cho các điểm mới của bạn để định vị chính xác nhất
 POPULAR_STOPS = {
     "02 võ oanh": [10.8021, 106.7142],
     "100 xa lộ hà nội": [10.8014, 106.7532],
@@ -72,43 +71,4 @@ with tab_monitor:
     st.write(f"**Đang giám sát:** {selected_start_hub}")
     col_m1, col_m2, col_m3 = st.columns(3)
     col_m1.markdown('<div class="metric-card"><b>ĐA GIAO POD</b><h3 style="color:#0056b3;margin:0;">1.420 kiện</h3></div>', unsafe_allow_html=True)
-    col_m2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
-    col_m3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
-    st.write("---")
-    col_c1, col_c2 = st.columns(2)
-    col_c1.write("#### Sản lượng giao thành công theo quận")
-    col_c1.bar_chart(pd.DataFrame(DISTRICT_DATA, index=DISTRICT_INDEX), color=["#0056b3", "#ffc745"])
-    col_c2.write("#### Trọng tải vận chuyển trong tuần (Tấn)")
-    col_c2.area_chart(pd.DataFrame(WEIGHT_DATA, index=WEIGHT_INDEX), color=["#22c55e", "#ef4444"])
-
-with tab_map:
-    st.write("### Bản đồ điều phối chuỗi điểm giao hàng (Đã tự động sắp xếp điểm gần nhau)")
-    col_left, col_right = st.columns([1.8, 1.2])
-    start_lat, start_lon = VNPOST_HUBS[selected_start_hub]["lat"], VNPOST_HUBS[selected_start_hub]["lon"]
-    
-    m = folium.Map(location=[start_lat, start_lon], zoom_start=13)
-    Fullscreen(position="topleft", title="Mở rộng", title_cancel="Thoát", force_separate_button=True).add_to(m)
-
-    if activated:
-        raw_stops = [line.strip() for line in stops_input.split('\n') if line.strip()]
-        if raw_stops:
-            try:
-                # OSRM Trip nhận định dạng [lon, lat]
-                base_coords = [[start_lon, start_lat]]
-                addr_mapping = {0: f"Xuất phát từ {selected_start_hub}"}
-                
-                for idx, stop_addr in enumerate(raw_stops, 1):
-                    loc = get_coordinates_from_address(stop_addr)
-                    base_coords.append([loc['lon'], loc['lat']])
-                    addr_mapping[idx] = f"{stop_addr}"
-                
-                # Gọi API dạng /trip/ để kích hoạt thuật toán TSP tự động sắp xếp các điểm tối ưu theo vị trí địa lý
-                coord_string = ";".join([f"{c[0]},{c[1]}" for c in base_coords])
-                url = f"http://router.project-osrm.org/trip/v1/driving/{coord_string}?source=first&destination=any&overview=full&geometries=geojson"
-                
-                res = requests.get(url, timeout=5).json()
-                if res.get('code') == 'Ok':
-                    trip = res['trips'][0]
-                    waypoints = res['waypoints']
-                    
-                    total_dist = trip['distance'] / 1000
+    col_m2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3
