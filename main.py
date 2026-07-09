@@ -96,49 +96,49 @@ st.markdown("<p style='color:#64748b; font-style:italic;'>Trực quan hóa mạn
 
 # CƠ SỞ DỮ LIỆU BƯU CỤC VNPOST TP.HCM CHUẨN
 VNPOST_HUBS = {
-    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris",
-    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng",
-    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng",
-    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo",
-    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan",
-    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng",
-    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ",
-    "Bưu cục Quận 4": "104 Nguyễn Tất Thành",
-    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng",
-    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi",
-    "Bưu cục Quận 5": "26 Nguyễn Thi",
-    "Bưu cục Quận 6": "88 Tháp Mười",
-    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập",
-    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát",
-    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển",
-    "Bưu cục Quận 8": "428 Tùng Thiện Vương",
-    "Bưu cục Quận 10": "157 Lý Thái Tổ",
-    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám",
-    "Bưu cục Phú Thọ (Q10)": "270 Lý Thường Kiệt",
-    "Bưu cục Quận 11": "244 Minh Phụng",
-    "Bưu cục Quang Trung (Q12)": "Tô Ký, Đông Hưng Thuận",
-    "Bưu cục Tân Thới Nhất (Q12)": "44 Phan Văn Hớn",
-    "Bưu cục An Khánh (Q2 cũ)": "D7 Trần Não",
-    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh",
-    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện",
-    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2",
-    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa",
-    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4",
-    "Bưu cục Thủ Đức": "128A Kha Vạn Cân",
-    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh",
-    "Bưu cục Bình Thạnh": "3 Phan Đăng Lưu",
-    "Bưu cục Phú Nhuận": "241 Phan Đình Phùng",
-    "Bưu cục Gò Vấp": "555 Lê Quang Định",
-    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm",
-    "Bưu cục Tân Sơn Nhất (TBT)": "2B Bạch Đằng",
-    "Bưu cục Tân Bình": "288 Hoàng Văn Thụ",
-    "Bưu cục Chí Hòa (TBT)": "695 Cách Mạng Tháng Tám",
-    "Bưu cục Gò Dầu (TPhú)": "Chung cư Gò Dầu 2",
-    "Bưu cục Tân Phú": "90 Nguyễn Sơn",
-    "Bưu cục Bình Hưng Hòa (BTân)": "1026 Tân Kỳ Tân Quý",
-    "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57 Lý Nam Đế",
-    "Bưu cục Tân Phú Trung (CC)": "912 Quốc Lộ 22",
-    "Bưu cục Bình Chánh": "E9 Nguyễn Hữu Trí"
+    "Bưu cục Giao dịch Sài Gòn (Q1)": "2 Công xã Paris, Quận 1",
+    "Bưu cục Giao Dịch Quốc Tế Sài Gòn (Q1)": "117 Hai Bà Trưng, Quận 1",
+    "Bưu cục Tân Định (Q1)": "230 Hai Bà Trưng, Quận 1",
+    "Bưu cục Trần Hưng Đạo (Q1)": "447B Trần Hưng Đạo, Quận 1",
+    "Bưu cục Quận 3": "2Bis Bà Huyện Thanh Quan, Quận 3",
+    "Bưu cục Bàn Cờ (Q3)": "49A Cao Thắng, Quận 3",
+    "Bưu cục Vườn Xoài (Q3)": "472 Lê Văn Sỹ, Quận 3",
+    "Bưu cục Quận 4": "104 Nguyễn Tất Thành, Quận 4",
+    "Bưu cục Khánh Hội (Q4)": "52 Lê Quốc Hưng, Quận 4",
+    "Bưu cục Nguyễn Trãi (Q5)": "49 Nguyễn Trãi, Quận 5",
+    "Bưu cục Quận 5": "26 Nguyễn Thi, Quận 5",
+    "Bưu cục Quận 6": "88 Tháp Mười, Quận 6",
+    "Bưu cục Tân Phong (Q7)": "565 Nguyễn Thị Thập, Quận 7",
+    "Bưu cục Quận 7": "1441 Huỳnh Tấn Phát, Quận 7",
+    "Bưu cục Chánh Hưng (Q8)": "Chung cư Phạm Thế Hiển, Quận 8",
+    "Bưu cục Quận 8": "428 Tùng Thiện Vương, Quận 8",
+    "Bưu cục Quận 10": "157 Lý Thái Tổ, Quận 10",
+    "Bưu cục Hoà Hưng (Q10)": "411 Cách Mạng Tháng Tám, Quận 10",
+    "Bưu cục Phú Thọ (Q10)": "270 Lý Thường Kiệt, Quận 10",
+    "Bưu cục Quận 11": "244 Minh Phụng, Quận 11",
+    "Bưu cục Quang Trung (Q12)": "Tô Ký, Đông Hưng Thuận, Quận 12",
+    "Bưu cục Tân Thới Nhất (Q12)": "44 Phan Văn Hớn, Quận 12",
+    "Bưu cục An Khánh (Q2 cũ)": "D7 Trần Não, Quận 2",
+    "Bưu cục Bình Trưng (Q2 cũ)": "42 Nguyễn Duy Trinh, Quận 2",
+    "Bưu cục Chợ Nhỏ (Q9 cũ)": "95 Man Thiện, Quận 9",
+    "Bưu cục Phước Bình (Q9 cũ)": "45 Đại lộ 2, Quận 9",
+    "Bưu cục Bình Triệu (Thủ Đức)": "705 Gò Dưa, Thủ Đức",
+    "Bưu cục Linh Trung (Thủ Đức)": "16 Đường số 4, Thủ Đức",
+    "Bưu cục Thủ Đức": "128A Kha Vạn Cân, Thủ Đức",
+    "Bưu cục Thị Nghè (Bình Thạnh)": "23 Xô Viết Nghệ Tĩnh, Bình Thạnh",
+    "Bưu cục Bình Thạnh": "3 Phan Đăng Lưu, Bình Thạnh",
+    "Bưu cục Phú Nhuận": "241 Phan Đình Phùng, Phú Nhuận",
+    "Bưu cục Gò Vấp": "555 Lê Quang Định, Gò Vấp",
+    "Bưu cục Lê Văn Thọ (Gò Vấp)": "56 Cây Trâm, Gò Vấp",
+    "Bưu cục Tân Sơn Nhất (TBT)": "2B Bạch Đằng, Tân Bình",
+    "Bưu cục Tân Bình": "288 Hoàng Văn Thụ, Tân Bình",
+    "Bưu cục Chí Hòa (TBT)": "695 Cách Mạng Tháng Tám, Tân Bình",
+    "Bưu cục Gò Dầu (TPhú)": "Chung cư Gò Dầu 2, Tân Phú",
+    "Bưu cục Tân Phú": "90 Nguyễn Sơn, Tân Phú",
+    "Bưu cục Bình Hưng Hòa (BTân)": "1026 Tân Kỳ Tân Quý, Bình Tân",
+    "Bưu cục Bưu Điện Trung Tâm Hóc Môn": "57 Lý Nam Đế, Hóc Môn",
+    "Bưu cục Tân Phú Trung (CC)": "912 Quốc Lộ 22, Củ Chi",
+    "Bưu cục Bình Chánh": "E9 Nguyễn Hữu Trí, Bình Chánh"
 }
 
 # ALGORITHM: GEOCODING TO GPS
@@ -242,7 +242,7 @@ with tab_enterprise:
             st.warning("⚠️ Hệ thống phát hiện có **24 bưu phẩm cồng kềnh** có kích thước vượt giỏ hàng xe máy thông thường.")
             st.markdown("""
             * 🛵 **Xe máy bưu tá:** Phù hợp bưu phẩm thư từ, tài liệu gọn (< 5kg).
-            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bỏ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
+            * 🚚 **Xe tải bưu chính nhỏ (1.25 Tấn):** Đã phân bổ 2 xe hỗ trợ đi gom tại các tuyến đường trục lớn để bảo đảm an toàn hàng hóa.
             """)
 
 # ------------------------------------------
@@ -251,8 +251,8 @@ with tab_enterprise:
 with tab_routing:
     st.markdown("### 🗺️ Bản đồ Định tuyến & Tối ưu lộ trình bưu tá")
     
-    # TIÊU ĐỀ THANH BÊN ĐÃ ĐƯỢC THAY ĐỔI THÀNH " Thiết lập Lộ trình Tối ưu"
-    st.sidebar.markdown("<h3 style='color:#0056b3;'> Thiết lập Lộ trình Tối ưu</h3>", unsafe_allow_html=True)
+    # TIÊU ĐỀ THANH BÊN ĐÃ ĐƯỢC ĐỔI THÀNH "⚡ Thiết lập Lộ trình Tối ưu"
+    st.sidebar.markdown("<h3 style='color:#0056b3;'>⚡ Thiết lập Lộ trình Tối ưu</h3>", unsafe_allow_html=True)
     
     selected_start_hub = st.sidebar.selectbox("Chọn nhanh bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     start_address = VNPOST_HUBS[selected_start_hub]
@@ -288,7 +288,7 @@ with tab_routing:
                         st.error(f"❌ Không tìm thấy vị trí khách hàng: '{end_input}'")
                     else:
                         profile = "driving"
-                        url = f"http://router.project-osrm.org/route/v1/{profile}/{loc1['lon']},{loc1['lat']};{loc2['lon']},{loc2['lat']}?overview=full&geometries=geojson"
+                        url = f"http://router.project-osrm.org/route/v1/{profile}/{loc1['lon']}/{loc1['lat']};{loc2['lon']},{loc2['lat']}?overview=full&geometries=geojson"
                         response = requests.get(url).json()
                         
                         if response.get('code') == 'Ok':
