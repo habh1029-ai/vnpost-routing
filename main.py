@@ -1,7 +1,6 @@
 import streamlit as st
 import folium
 from folium.plugins import Fullscreen
-import math
 import requests
 import pandas as pd
 from streamlit_folium import folium_static
@@ -13,7 +12,6 @@ st.markdown("""
         .main-title { font-size: 2rem !important; font-weight: 800; color: #0056b3; text-transform: uppercase; border-bottom: 4px solid #F2A900; padding-bottom: 10px; margin-bottom: 5px; }
         .metric-card { background: #f8fafc; border-left: 5px solid #F2A900; border-radius: 8px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 10px; }
         div.stButton > button:first-child { background: #F2A900; color: #003366 !important; font-weight: bold !important; border: none; border-radius: 6px; width: 100%; }
-        .logo-container { text-align: center; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -60,10 +58,12 @@ def get_coordinates_from_address(address_text):
     return {"lat": 10.7760, "lon": 106.7032}
 
 with st.sidebar:
-    # ĐÃ CẬP NHẬT: Thay đổi sang link ảnh công khai chống chặn hiển thị từ Wikipedia
-    logo_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Logo_Vietnam_Post.svg/1200px-Logo_Vietnam_Post.svg.png"
-    st.markdown(f'<div class="logo-container"><img src="{logo_url}" width="180"></div>', unsafe_allow_html=True)
-    
+    # ĐÃ CẬP NHẬT: Dùng st.image chuẩn của Streamlit để tải ảnh ổn định, không lo lỗi bảo mật chặn link
+    st.image(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Logo_Vietnam_Post.svg/1200px-Logo_Vietnam_Post.svg.png",
+        use_container_width=True
+    )
+    st.write("")
     st.write("### CẤU HÌNH PHÂN TUYẾN")
     selected_start_hub = st.selectbox("Chọn bưu cục xuất phát:", list(VNPOST_HUBS.keys()))
     st.text_area("Địa chỉ bưu cục điều phối:", value=VNPOST_HUBS[selected_start_hub]["address"], height=70, disabled=True)
@@ -78,9 +78,11 @@ tab_monitor, tab_map, tab_order = st.tabs(["Trung tâm Giám sát", "Tối ưu T
 with tab_monitor:
     st.write(f"**Đang giám sát:** {selected_start_hub}")
     col_m1, col_m2, col_m3 = st.columns(3)
-    col_m1.markdown('<div class="metric-card"><b>ĐA GIAO POD</b><h3 style="color:#0056b3;margin:0;">1.420 kiện</h3></div>', unsafe_allow_html=True)
-    col_m2.markdown('<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>', unsafe_allow_html=True)
-    col_m3.markdown('<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>', unsafe_allow_html=True)
+    
+    col_m1.markdown("""<div class="metric-card"><b>ĐA GIAO POD</b><h3 style="color:#0056b3;margin:0;">1.420 kiện</h3></div>""", unsafe_allow_html=True)
+    col_m2.markdown("""<div class="metric-card"><b>BƯU TÁ THỰC ĐỊA</b><h3 style="color:#0056b3;margin:0;">45 Nhân sự</h3></div>""", unsafe_allow_html=True)
+    col_m3.markdown("""<div class="metric-card"><b>TỶ LỆ TOÀN TRÌNH</b><h3 style="color:#e67e22;margin:0;">94.8 %</h3></div>""", unsafe_allow_html=True)
+    
     st.write("---")
     col_c1, col_c2 = st.columns(2)
     col_c1.write("#### Sản lượng giao thành công theo quận")
